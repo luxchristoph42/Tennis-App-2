@@ -6,6 +6,9 @@ export default function Schedule() {
 
   useEffect(() => {
     async function loadMatches() {
+      // Wird erst im Browser ausgeführt, nicht beim Vercel-Build
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
+      
       const { data } = await supabase
         .from('matches')
         .select('*, player1:players!player1_id(name), player2:players!player2_id(name), court:courts(name)');
