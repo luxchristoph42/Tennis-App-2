@@ -115,4 +115,33 @@ export default async function handler(req, res) {
       const groupId = groupIdMap.get(match.groupName);
 
       const { error: matchError } = await supabase
-        .from('
+        .from('matches')
+        .insert([
+          {
+            group_id: groupId,
+            player1_id: match.player1.id,
+            player2_id: match.player2.id,
+            court_id: match.courtId,
+            status: match.status,
+          },
+        ]);
+
+      if (matchError) {
+        throw matchError;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      groupsCreated: groups.length,
+      matchesCreated: matches.length,
+      checkedInPlayers: players.length,
+    });
+  } catch (error) {
+    console.error('Fehler bei Turniergenerierung:', error);
+
+    return res.status(500).json({
+      error: error.message || 'Unbekannter Fehler'
+    });
+  }
+}
