@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import Link from 'next/link';
 
 export default function Schedule() {
-  const [players, setPlayers] = useState([]);
+  const [allPlayers, setAllPlayers] = useState([]);
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -17,9 +17,8 @@ export default function Schedule() {
         .select('*');
 
       if (pError) throw pError;
-      setPlayers(playersData || []);
+      setAllPlayers(playersData || []);
 
-      // Platzanzahl aus dem Adminbereich auslesen
       const savedCourts = localStorage.getItem('tennis_courts');
       if (savedCourts) setCourtCount(parseInt(savedCourts));
     } catch (err) {
@@ -33,20 +32,24 @@ export default function Schedule() {
     loadInitialData();
   }, []);
 
+  // Filtert alle Spieler heraus, die im Admin-Bereich eingecheckt wurden
+  const checkedInPlayers = allPlayers.filter(player => player.checked_in);
+
   const generateTournamentSchedule = () => {
     setError('');
-    if (players.length < 3) {
-      setError(`Zu wenige Spieler insgesamt! Du brauchst mindestens 3 Spieler im System.`);
+    
+    // Wichtig: Wir prüfen jetzt die Anzahl der EINGECHECKTEN Spieler
+    if (checkedInPlayers.length < 2) {
+      setError(`Zu wenige spielbereite Spieler! Es müssen mindestens 2 Spieler im Admin-Bereich eingecheckt sein. Aktuell eingecheckt: ${checkedInPlayers.length}`);
       return;
     }
 
     try {
       setLoading(true);
-
-      // 1. Spieler nach Altersklassen (bezogen auf das aktuelle Jahr 2026) vorsortieren
       const categories = { U12: [], U15: [], U18: [], Open: [] };
       
-      players.forEach(player => {
+      // Nur eingecheckte Spieler einteilen
+      checkedInPlayers.forEach(player => {
         const age = 2026 - player.birth_year;
         if (age <= 12) categories.U12.push(player);
         else if (age <= 15) categories.U15.push(player);
@@ -57,15 +60,12 @@ export default function Schedule() {
       const generatedMatches = [];
       let matchCounter = 0;
 
-      // 2. Spiele getrennt für JEDE Altersklasse generieren (Jeder gegen jeden innerhalb der Klasse)
       Object.keys(categories).forEach(catName => {
         const catPlayers = categories[catName];
         
-        // Eine Gruppe benötigt mindestens 2 Spieler, um gegeneinander zu spielen
         if (catPlayers.length >= 2) {
           for (let i = 0; i < catPlayers.length; i++) {
             for (let j = i + 1; j < catPlayers.length; j++) {
-              // Platznummer dynamisch anhand der Admin-Einstellung zuteilen
               const courtNumber = (matchCounter % courtCount) + 1;
 
               generatedMatches.push({
@@ -83,7 +83,7 @@ export default function Schedule() {
       });
 
       if (generatedMatches.length === 0) {
-        setError("In keiner Altersklasse sind genügend Spieler (mindestens 2), um ein Match zu erzeugen!");
+        setError("In den besetzten Altersklassen sind nicht genügend Spieler aktiv eingecheckt (mindestens 2 benötigt)!");
         setMatches([]);
       } else {
         setMatches(generatedMatches);
@@ -106,7 +106,7 @@ export default function Schedule() {
 
         <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>Turnier-Spielplan</h1>
         <p style={{ color: '#71717a', marginBottom: '24px' }}>
-          Spieler im System: <strong>{players.length}</strong> | Eingestellte Plätze: <strong>{courtCount}</strong>
+          Registrierte Spieler gesamt: <strong>{allPlayers.length}</strong> | Davon spielbereit eingecheckt: <strong style={{ color: 'green' }}>{checkedInPlayers.length}</strong>
         </p>
 
         {error && (
@@ -120,19 +120,19 @@ export default function Schedule() {
           disabled={loading}
           style={{ backgroundColor: '#0070f3', color: 'white', padding: '14px 28px', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', marginBottom: '40px' }}
         >
-          Spielplan nach Altersklassen berechnen 🚀
+          Spielplan für eingecheckte Spieler berechnen 🚀
         </button>
 
         <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>Geplante Begegnungen</h2>
         
         {matches.length === 0 ? (
           <div style={{ padding: '32px', backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '12px', textAlign: 'center', color: '#a1a1aa', fontStyle: 'italic' }}>
-            Noch keine Spiele generiert. Klicke auf den Button oben.
+            Noch keine Spiele generiert. Vergewissere dich, dass Spieler im Admin-Bereich eingecheckt sind.
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {matches.map((match) => (
-              <div key={match.id} style={{ backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={match.id} style={{ backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '12px', padding: '16px', display: 'flex', justifycontent: 'space-between', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <span style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', marginRight: '10px' }}>
                     {match.category}
