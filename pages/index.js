@@ -13,8 +13,22 @@ export default function Home() {
           <nav className="flex gap-3">
             <Link
               href="/register"
-              className="px-4 py-2 rounded-xl text-slate-600 hover:bg            className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
-section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
+              className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
+            >
+              Registrieren
+            </Link>
+            <Link
+              href="/admin/checkin"
+              className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
+            >
+              Admin Check-In
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
         <div className="max-w-3xl">
           <div className="inline-flex items-center rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 mb-6">
             Moderne Turnierverwaltung für Tennisvereine
@@ -34,9 +48,22 @@ section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
           <div className="flex flex-wrap gap-4 mt-10">
             <Link
               href="/register"
-              className="bg-blue-600 ink
+              className="bg-blue-600 text-white px-6 py-4 rounded-2xl font-bold hover:bg-blue-700 transition"
+            >
+              Jetzt registrieren
+            </Link>
+            <Link
               href="/admin/checkin"
-              className="bg-white border border-slate-200 px-6 py-4 rounded-2xl font-bold hover:bg-s  <section className="max-w-7xl mx-auto px-6 pb-20">
+              className="bg-white border border-slate-200 px-6 py-4 rounded-2xl font-bold hover:bg-slate-50 transition"
+            >
+              Zum Check-In
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="max-w-7xl mx-auto px-6 pb-20">
         <div className="bg-white rounded-[32px] shadow-xl border border-slate-100 p-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
@@ -164,21 +191,30 @@ section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
         <div className="grid md:grid-cols-3 gap-6">
           <Link
             href="/register"
-            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-lgext-slate-600">
+            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-lg transition block"
+          >
+            <h3 className="font-bold text-xl mb-2">Registrierung</h3>
+            <p className="text-slate-600">
               Neue Spieler registrieren
             </p>
           </Link>
 
           <Link
             href="/admin/checkin"
-            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm<p className="text-slate-600">
+            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-lg transition block"
+          >
+            <h3 className="font-bold text-xl mb-2">Check-In</h3>
+            <p className="text-slate-600">
               Anwesenheiten verwalten
             </p>
           </Link>
 
           <Link
             href="/schedule"
-            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm <p className="text-slate-600">
+            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-lg transition block"
+          >
+            <h3 className="font-bold text-xl mb-2">Spielplan</h3>
+            <p className="text-slate-600">
               Aktuelle Begegnungen anzeigen
             </p>
           </Link>
@@ -198,7 +234,11 @@ section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
 
           <Link
             href="/register"
-            className="inline-flex 
+            className="inline-flex bg-white text-blue-600 px-8 py-4 rounded-2xl font-bold hover:bg-blue-50 transition"
+          >
+            Jetzt loslegen
+          </Link>
+        </div>
       </section>
 
       {/* Footer */}
@@ -210,4 +250,3 @@ section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
     </div>
   );
 }
-``
