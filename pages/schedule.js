@@ -3,98 +3,64 @@ import { supabase } from '../lib/supabase';
 import Link from 'next/link';
 
 export default function Schedule() {
-  const [allPlayers, setAllPlayers] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [activeTab, setActiveTab] = useState('matches'); // 'matches' oder 'table'
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [courtCount, setCourtCount] = useState(2);
 
-  const loadInitialData = async () => {
+  const loadMatches = async () => {
     try {
       setLoading(true);
-      const { data: playersData, error: pError } = await supabase
-        .from('players')
-        .select('*');
-
-      if (pError) throw pError;
-      setAllPlayers(playersData || []);
-
-      const savedCourts = localStorage.getItem('tennis_courts');
-      if (savedCourts) setCourtCount(parseInt(savedCourts));
+      const { data, error } = await supabase.from('matches').select('*').order('id');
+      if (!error && data) setMatches(data);
     } catch (err) {
-      setError('Daten konnten nicht geladen werden.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadInitialData();
+    loadMatches();
+    // Echtzeit-Aktualisierung alle 10 Sekunden für die Zuschauer auf der Anlage
+    const interval = setInterval(loadMatches, 10000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Filtert alle Spieler heraus, die im Admin-Bereich eingecheckt wurden
-  const checkedInPlayers = allPlayers.filter(player => player.checked_in);
+  // DIKTATORISCHE LIVE-RANGLISTEN BERECHNUNG
+  const calculateStandings = () => {
+    const standings = {}; // Struktur: { 'Klasse': { 'Spielername': { wins: 0, matches: 0 } } }
 
-  const generateTournamentSchedule = () => {
-    setError('');
-    
-    // Wichtig: Wir prüfen jetzt die Anzahl der EINGECHECKTEN Spieler
-    if (checkedInPlayers.length < 2) {
-      setError(`Zu wenige spielbereite Spieler! Es müssen mindestens 2 Spieler im Admin-Bereich eingecheckt sein. Aktuell eingecheckt: ${checkedInPlayers.length}`);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const categories = { U12: [], U15: [], U18: [], Open: [] };
+    matches.forEach(m => {
+      const cat = m.category;
+      if (!standings[cat]) standings[cat] = {};
       
-      // Nur eingecheckte Spieler einteilen
-      checkedInPlayers.forEach(player => {
-        const age = 2026 - player.birth_year;
-        if (age <= 12) categories.U12.push(player);
-        else if (age <= 15) categories.U15.push(player);
-        else if (age <= 18) categories.U18.push(player);
-        else categories.Open.push(player);
-      });
+      if (!standings[cat][m.player1_name]) standings[cat][m.player1_name] = { name: m.player1_name, wins: 0, played: 0, points: 0 };
+      if (!standings[cat][m.player2_name]) standings[cat][m.player2_name] = { name: m.player2_name, wins: 0, played: 0, points: 0 };
 
-      const generatedMatches = [];
-      let matchCounter = 0;
-
-      Object.keys(categories).forEach(catName => {
-        const catPlayers = categories[catName];
+      if (m.status === 'Beendet') {
+        standings[cat][m.player1_name].played += 1;
+        standings[cat][m.player2_name].played += 1;
         
-        if (catPlayers.length >= 2) {
-          for (let i = 0; i < catPlayers.length; i++) {
-            for (let j = i + 1; j < catPlayers.length; j++) {
-              const courtNumber = (matchCounter % courtCount) + 1;
-
-              generatedMatches.push({
-                id: `m-${catName}-${i}-${j}`,
-                category: catName,
-                player1_name: catPlayers[i].name,
-                player2_name: catPlayers[j].name,
-                court: `Platz ${courtNumber}`,
-                status: 'Ausstehend'
-              });
-              matchCounter++;
-            }
-          }
+        if (m.winner === m.player1_name) {
+          standings[cat][m.player1_name].wins += 1;
+          standings[cat][m.player1_name].points += 2; // 2 Punkte für Sieg
+        } else if (m.winner === m.player2_name) {
+          standings[cat][m.player2_name].wins += 1;
+          standings[cat][m.player2_name].points += 2;
         }
-      });
-
-      if (generatedMatches.length === 0) {
-        setError("In den besetzten Altersklassen sind nicht genügend Spieler aktiv eingecheckt (mindestens 2 benötigt)!");
-        setMatches([]);
-      } else {
-        setMatches(generatedMatches);
       }
+    });
 
-    } catch (err) {
-      setError('Fehler bei der Generierung des Spielplans.');
-    } finally {
-      setLoading(false);
-    }
+    // In Arrays umwandeln und nach Punkten sortieren
+    const sortedCategories = {};
+    Object.keys(standings).forEach(cat => {
+      sortedCategories[cat] = Object.values(standings[cat]).sort((a, b) => b.points - a.points);
+    });
+
+    return sortedCategories;
   };
+
+  const standingsData = calculateStandings();
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f4f4f5', fontFamily: 'sans-serif', color: '#18181b', padding: '40px 24px' }}>
@@ -104,51 +70,89 @@ export default function Schedule() {
           <Link href="/">← Zurück zur Startseite</Link>
         </div>
 
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>Turnier-Spielplan</h1>
-        <p style={{ color: '#71717a', marginBottom: '24px' }}>
-          Registrierte Spieler gesamt: <strong>{allPlayers.length}</strong> | Davon spielbereit eingecheckt: <strong style={{ color: 'green' }}>{checkedInPlayers.length}</strong>
-        </p>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px' }}>Turnier-Zentrale 🎾</h1>
 
-        {error && (
-          <div style={{ padding: '16px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '8px', marginBottom: '24px' }}>
-            ⚠️ {error}
-          </div>
-        )}
+        {/* REITER / TABS UMSCHALTUNG */}
+        <div style={{ display: 'flex', borderBottom: '2px solid #e4e4e7', marginBottom: '24px', gap: '8px' }}>
+          <button 
+            onClick={() => setActiveTab('matches')}
+            style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'matches' ? '3px solid #0070f3' : 'none', color: activeTab === 'matches' ? '#0070f3' : '#71717a' }}
+          >
+            Spiele & Courts 📅
+          </button>
+          <button 
+            onClick={() => setActiveTab('table')}
+            style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'table' ? '3px solid #0070f3' : 'none', color: activeTab === 'table' ? '#0070f3' : '#71717a' }}
+          >
+            Live-Rangliste 🏆
+          </button>
+        </div>
 
-        <button
-          onClick={generateTournamentSchedule}
-          disabled={loading}
-          style={{ backgroundColor: '#0070f3', color: 'white', padding: '14px 28px', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', marginBottom: '40px' }}
-        >
-          Spielplan für eingecheckte Spieler berechnen 🚀
-        </button>
+        {loading && <p style={{ color: '#71717a' }}>Aktualisiere Live-Daten...</p>}
 
-        <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>Geplante Begegnungen</h2>
-        
-        {matches.length === 0 ? (
-          <div style={{ padding: '32px', backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '12px', textAlign: 'center', color: '#a1a1aa', fontStyle: 'italic' }}>
-            Noch keine Spiele generiert. Vergewissere dich, dass Spieler im Admin-Bereich eingecheckt sind.
-          </div>
-        ) : (
+        {/* ANSICHT 1: SPIELE */}
+        {activeTab === 'matches' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {matches.map((match) => (
-              <div key={match.id} style={{ backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '12px', padding: '16px', display: 'flex', justifycontent: 'space-between', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <span style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', marginRight: '10px' }}>
-                    {match.category}
-                  </span>
-                  <span style={{ fontWeight: 'bold' }}>{match.player1_name}</span>
-                  <span style={{ color: '#a1a1aa', margin: '0 8px', fontSize: '12px' }}>VS</span>
-                  <span style={{ fontWeight: 'bold' }}>{match.player2_name}</span>
+            {matches.length === 0 ? (
+              <p style={{ fontStyle: 'italic', color: '#a1a1aa' }}>Derzeit sind keine Spiele angesetzt.</p>
+            ) : (
+              matches.map(match => (
+                <div key={match.id} style={{ backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', marginRight: '10px' }}>{match.category}</span>
+                    <span style={{ fontWeight: match.winner === match.player1_name ? 'bold' : 'normal', color: match.winner === match.player1_name ? '#0070f3' : 'inherit' }}>{match.player1_name}</span>
+                    <span style={{ color: '#a1a1aa', margin: '0 8px', fontSize: '12px' }}>VS</span>
+                    <span style={{ fontWeight: match.winner === match.player2_name ? 'bold' : 'normal', color: match.winner === match.player2_name ? '#0070f3' : 'inherit' }}>{match.player2_name}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <span style={{ backgroundColor: '#f4f4f5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{match.court}</span>
+                    <span style={{ color: match.status === 'Beendet' ? 'green' : '#d97706', fontSize: '13px', fontWeight: '500' }}>
+                      {match.status === 'Beendet' ? `🎉 ${match.result || 'Beendet'}` : '● Aktiv'}
+                    </span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <span style={{ backgroundColor: '#f4f4f5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', color: '#71717a' }}>{match.court}</span>
-                  <span style={{ color: '#d97706', fontSize: '13px' }}>● {match.status}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
+
+        {/* ANSICHT 2: LIVE-TABELLE */}
+        {activeTab === 'table' && (
+          <div>
+            {Object.keys(standingsData).length === 0 ? (
+              <p style={{ fontStyle: 'italic', color: '#a1a1aa' }}>Noch keine Tabellendaten verfügbar. Spiele müssen dafür beendet sein.</p>
+            ) : (
+              Object.keys(standingsData).map(cat => (
+                <div key={cat} style={{ backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '16px', padding: '20px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  <h3 style={{ margin: '0 0 12px 0', color: '#166534', fontSize: '18px', borderBottom: '1px solid #eee', paddingBottom: '6px' }}>Altersklasse {cat}</h3>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                    <thead>
+                      <tr style={{ textAlign: 'left', color: '#71717a', borderBottom: '2px solid #f4f4f5' }}>
+                        <th style={{ padding: '6px' }}>Platz</th>
+                        <th style={{ padding: '6px' }}>Spieler</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Spiele</th>
+                        <th style={{ padding: '6px', textAlign: 'center' }}>Siege</th>
+                        <th style={{ padding: '6px', textAlign: 'right' }}>Punkte</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {standingsData[cat].map((row, index) => (
+                        <tr key={row.name} style={{ borderBottom: '1px solid #f4f4f5', fontWeight: index === 0 ? 'bold' : 'normal' }}>
+                          <td style={{ padding: '10px 6px', color: index === 0 ? '#d97706' : '#71717a' }}>#{index + 1}</td>
+                          <td style={{ padding: '10px 6px' }}>{row.name} {index === 0 && '👑'}</td>
+                          <td style={{ padding: '10px 6px', textAlign: 'center' }}>{row.played}</td>
+                          <td style={{ padding: '10px 6px', textAlign: 'center', color: 'green' }}>{row.wins}</td>
+                          <td style={{ padding: '10px 6px', textAlign: 'right', color: '#0070f3' }}>{row.points} Pkt.</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
