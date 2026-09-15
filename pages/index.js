@@ -2,249 +2,166 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <h1 className="text-2xl font-black text-slate-900">
-            🎾 TennisTurnier
-          </h1>
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans antialiased selection:bg-blue-500/30">
+      {/* Subtiler Luma-Glow-Effekt im Hintergrund */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[500px] bg-gradient-to-b from-blue-600/10 via-transparent to-transparent blur-[120px] pointer-events-none" />
 
-          <nav className="flex gap-3">
-            <Link
-              href="/register"
-              className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
-            >
-              Registrieren
-            </Link>
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-zinc-800/50 bg-[#09090b]/70 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🎾</span>
+            <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">
+              TennisTurnier
+            </span>
+          </div>
+
+          <nav className="flex items-center gap-2">
             <Link
               href="/admin/checkin"
-              className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
+              className="px-4 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 rounded-xl hover:bg-zinc-900 transition-all duration-200"
             >
               Admin Check-In
+            </Link>
+            <Link
+              href="/register"
+              className="px-4 py-2 text-sm font-semibold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 rounded-xl shadow-sm transition-all duration-200"
+            >
+              Registrieren
             </Link>
           </nav>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 pt-20 pb-24">
-        <div className="max-w-3xl">
-          <div className="inline-flex items-center rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 mb-6">
-            Moderne Turnierverwaltung für Tennisvereine
-          </div>
-
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight text-slate-900 leading-tight">
-            Tennisturniere
-            <br />
-            einfach organisieren.
-          </h1>
-
-          <p className="mt-6 text-xl text-slate-600 leading-relaxed">
-            Anmeldung, Check-In, automatische Gruppeneinteilung
-            und Spielpläne in einer einzigen Anwendung.
-          </p>
-
-          <div className="flex flex-wrap gap-4 mt-10">
-            <Link
-              href="/register"
-              className="bg-blue-600 text-white px-6 py-4 rounded-2xl font-bold hover:bg-blue-700 transition"
-            >
-              Jetzt registrieren
-            </Link>
-            <Link
-              href="/admin/checkin"
-              className="bg-white border border-slate-200 px-6 py-4 rounded-2xl font-bold hover:bg-slate-50 transition"
-            >
-              Zum Check-In
-            </Link>
-          </div>
+      <section className="relative max-w-6xl mx-auto px-6 pt-24 pb-20 text-center flex flex-col items-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/50 px-4 py-1.5 text-xs font-medium text-zinc-400 mb-6 backdrop-blur-sm">
+          <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+          Moderne Turnierverwaltung für Vereine
         </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="max-w-7xl mx-auto px-6 pb-20">
-        <div className="bg-white rounded-[32px] shadow-xl border border-slate-100 p-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-black text-blue-600">
-                100%
-              </div>
-              <p className="mt-2 text-slate-500">Digital</p>
-            </div>
+        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-zinc-100 max-w-3xl leading-[1.15] bg-gradient-to-b from-zinc-100 via-zinc-200 to-zinc-500 bg-clip-text text-transparent">
+          Tennisturniere einfach organisieren.
+        </h1>
 
-            <div>
-              <div className="text-4xl font-black text-blue-600">
-                3-5
-              </div>
-              <p className="mt-2 text-slate-500">
-                Spieler pro Gruppe
-              </p>
-            </div>
+        <p className="mt-6 text-lg text-zinc-400 max-w-xl font-normal leading-relaxed">
+          Anmeldung, Check-In, automatische Gruppeneinteilung und Live-Spielpläne in einer flüssigen Web-App.
+        </p>
 
-            <div>
-              <div className="text-4xl font-black text-blue-600">
-                1 Klick
-              </div>
-              <p className="mt-2 text-slate-500">Neuplanung</p>
-            </div>
-
-            <div>
-              <div className="text-4xl font-black text-blue-600">
-                ∞
-              </div>
-              <p className="mt-2 text-slate-500">Turniere</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="max-w-7xl mx-auto px-6 pb-20">
-        <h2 className="text-3xl font-black text-center mb-12">
-          Alles für euren Turniertag
-        </h2>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-            <div className="text-4xl mb-4">📝</div>
-
-            <h3 className="font-bold text-xl mb-3">
-              Anmeldung
-            </h3>
-
-            <p className="text-slate-600">
-              Spieler können sich bequem online
-              registrieren.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-            <div className="text-4xl mb-4">⚡</div>
-
-            <h3 className="font-bold text-xl mb-3">
-              Automatische Gruppen
-            </h3>
-
-            <p className="text-slate-600">
-              Optimierte Gruppeneinteilung mit wenigen
-              Klicks.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-            <div className="text-4xl mb-4">🎾</div>
-
-            <h3 className="font-bold text-xl mb-3">
-              Spielpläne
-            </h3>
-
-            <p className="text-slate-600">
-              Begegnungen und Plätze werden automatisch
-              erstellt.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Ablauf */}
-      <section className="max-w-7xl mx-auto px-6 pb-20">
-        <div className="bg-white rounded-3xl border border-slate-100 p-10">
-          <h2 className="text-3xl font-black mb-10">
-            So funktioniert es
-          </h2>
-
-          <div className="grid md:grid-cols-4 gap-6">
-            <div>
-              <div className="text-blue-600 text-3xl font-black mb-3">
-                1
-              </div>
-              <p>Online anmelden</p>
-            </div>
-
-            <div>
-              <div className="text-blue-600 text-3xl font-black mb-3">
-                2
-              </div>
-              <p>Am Turniertag einchecken</p>
-            </div>
-
-            <div>
-              <div className="text-blue-600 text-3xl font-black mb-3">
-                3
-              </div>
-              <p>Gruppen automatisch erzeugen</p>
-            </div>
-
-            <div>
-              <div className="text-blue-600 text-3xl font-black mb-3">
-                4
-              </div>
-              <p>Spielplan sofort nutzen</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Schnellzugriff */}
-      <section className="max-w-7xl mx-auto px-6 pb-24">
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="flex sm:flex-row flex-col gap-3 mt-10 w-full sm:w-auto">
           <Link
             href="/register"
-            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-lg transition block"
+            className="px-8 py-4 rounded-2xl font-semibold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 shadow-lg shadow-zinc-950/20 text-center transition-all duration-200"
           >
-            <h3 className="font-bold text-xl mb-2">Registrierung</h3>
-            <p className="text-slate-600">
-              Neue Spieler registrieren
-            </p>
+            Turnier erstellen
           </Link>
-
-          <Link
-            href="/admin/checkin"
-            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-lg transition block"
-          >
-            <h3 className="font-bold text-xl mb-2">Check-In</h3>
-            <p className="text-slate-600">
-              Anwesenheiten verwalten
-            </p>
-          </Link>
-
           <Link
             href="/schedule"
-            className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-lg transition block"
+            className="px-8 py-4 rounded-2xl font-semibold text-zinc-300 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800/70 hover:border-zinc-700 text-center transition-all duration-200"
           >
-            <h3 className="font-bold text-xl mb-2">Spielplan</h3>
-            <p className="text-slate-600">
-              Aktuelle Begegnungen anzeigen
-            </p>
+            Spielpläne ansehen
           </Link>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="max-w-5xl mx-auto px-6 pb-24">
-        <div className="bg-blue-600 rounded-[32px] p-12 text-center text-white">
-          <h2 className="text-4xl font-black mb-4">
-            Bereit für den nächsten Turniertag?
-          </h2>
-
-          <p className="text-blue-100 mb-8 text-lg">
-            Weniger Excel. Weniger Chaos. Mehr Tennis.
-          </p>
-
-          <Link
-            href="/register"
-            className="inline-flex bg-white text-blue-600 px-8 py-4 rounded-2xl font-bold hover:bg-blue-50 transition"
+      {/* Bento Grid (Schnellzugriff & Features kombiniert) */}
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* Große Kachel: Anmeldung (Link) */}
+          <Link 
+            href="/register" 
+            className="group relative md:col-span-2 overflow-hidden rounded-3xl border border-zinc-800/80 bg-gradient-to-br from-zinc-900 to-zinc-950 p-8 hover:border-zinc-700 transition-all duration-300 flex flex-col justify-between min-h-[240px]"
           >
-            Jetzt loslegen
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all duration-300" />
+            <div className="text-3xl bg-zinc-800/50 w-12 h-12 rounded-xl flex items-center justify-center border border-zinc-700/50">📝</div>
+            <div>
+              <h3 className="font-bold text-xl text-zinc-100 mb-2 flex items-center gap-2">
+                Spieler-Registrierung
+                <span className="text-zinc-500 group-hover:translate-x-1 transition-transform text-sm">→</span>
+              </h3>
+              <p className="text-zinc-400 text-sm max-w-md">
+                Erstelle ein neues Turnier. Spieler können sich bequem über einen geteilten Link online anmelden.
+              </p>
+            </div>
           </Link>
+
+          {/* Kleine Kachel: Stats */}
+          <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/50 p-8 flex flex-col justify-between min-h-[240px]">
+            <div className="text-3xl bg-zinc-800/50 w-12 h-12 rounded-xl flex items-center justify-center border border-zinc-700/50">⚡</div>
+            <div>
+              <div className="text-3xl font-black text-zinc-100 tracking-tight">1 Klick</div>
+              <p className="text-zinc-400 text-sm mt-1">Automatische Gruppeneinteilung (3-5 Spieler).</p>
+            </div>
+          </div>
+
+          {/* Kleine Kachel: Admin Check-In (Link) */}
+          <Link 
+            href="/admin/checkin" 
+            className="group relative overflow-hidden rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900 to-zinc-950 p-8 hover:border-zinc-700 transition-all duration-300 flex flex-col justify-between min-h-[240px]"
+          >
+            <div className="text-3xl bg-zinc-800/50 w-12 h-12 rounded-xl flex items-center justify-center border border-zinc-700/50">🛡️</div>
+            <div>
+              <h3 className="font-bold text-xl text-zinc-100 mb-2 flex items-center gap-2">
+                Admin Check-In
+                <span className="text-zinc-500 group-hover:translate-x-1 transition-transform text-sm">→</span>
+              </h3>
+              <p className="text-zinc-400 text-sm">
+                Anwesenheiten am Turniertag live verwalten und verifizieren.
+              </p>
+            </div>
+          </Link>
+
+          {/* Große Kachel: Spielpläne (Link) */}
+          <Link 
+            href="/schedule" 
+            className="group relative md:col-span-2 overflow-hidden rounded-3xl border border-zinc-800/80 bg-gradient-to-br from-zinc-900 to-zinc-950 p-8 hover:border-zinc-700 transition-all duration-300 flex flex-col justify-between min-h-[240px]"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl group-hover:bg-emerald-500/10 transition-all duration-300" />
+            <div className="text-3xl bg-zinc-800/50 w-12 h-12 rounded-xl flex items-center justify-center border border-zinc-700/50">🎾</div>
+            <div>
+              <h3 className="font-bold text-xl text-zinc-100 mb-2 flex items-center gap-2">
+                Live-Spielpläne
+                <span className="text-zinc-500 group-hover:translate-x-1 transition-transform text-sm">→</span>
+              </h3>
+              <p className="text-zinc-400 text-sm max-w-md">
+                Begegnungen, freie Plätze und Ergebnisse in Echtzeit für alle Teilnehmer einsehbar.
+              </p>
+            </div>
+          </Link>
+
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-6 py-8 text-center text-slate-500">
-          TennisTurnier • Digitale Turnierverwaltung für Vereine
+      {/* So funktioniert es (Ablauf als edle Zeile) */}
+      <section className="max-w-6xl mx-auto px-6 pb-24">
+        <div className="rounded-3xl border border-zinc-800/60 bg-zinc-900/20 p-8 md:p-10 backdrop-blur-sm">
+          <h2 className="text-xl font-bold text-zinc-200 mb-8 tracking-tight">In 4 Schritten auf dem Platz</h2>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { num: "01", text: "Online anmelden" },
+              { num: "02", text: "Am Turniertag einchecken" },
+              { num: "03", text: "Gruppen erzeugen" },
+              { num: "04", text: "Spielplan live nutzen" }
+            ].map((step, idx) => (
+              <div key={idx} className="border-l border-zinc-800 pl-4">
+                <div className="text-xs font-mono text-zinc-500 mb-1">{step.num}</div>
+                <p className="text-sm font-medium text-zinc-300">{step.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Minimalistischer Footer */}
+      <footer className="border-t border-zinc-900 bg-[#09090b]">
+        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+          <div>&copy; {new Date().getFullYear()} TennisTurnier. Alle Rechte vorbehalten.</div>
+          <div className="flex gap-4">
+            <span className="hover:text-zinc-300 cursor-pointer">Impressum</span>
+            <span className="hover:text-zinc-300 cursor-pointer">Datenschutz</span>
+          </div>
         </div>
       </footer>
     </div>
