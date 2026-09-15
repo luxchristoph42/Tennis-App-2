@@ -7,12 +7,11 @@ export default function Schedule() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [courtCount, setCourtCount] = useState(2);
 
-  // 1. Spieler aus der Datenbank laden
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      // Hier laden wir alle Spieler (oder optional nur die, die eingecheckt sind)
       const { data: playersData, error: pError } = await supabase
         .from('players')
         .select('*');
@@ -20,16 +19,10 @@ export default function Schedule() {
       if (pError) throw pError;
       setPlayers(playersData || []);
 
-      // Falls bereits ein Spielplan in einer Tabelle existiert, laden wir diesen auch
-      const { data: matchesData, error: mError } = await supabase
-        .from('matches') // Falls du eine Matches-Tabelle hast
-        .select('*');
-        
-      if (!mError && matchesData) {
-        setMatches(matchesData);
-      }
+      // Platzanzahl aus dem Adminbereich auslesen
+      const savedCourts = localStorage.getItem('tennis_courts');
+      if (savedCourts) setCourtCount(parseInt(savedCourts));
     } catch (err) {
-      console.error('Fehler beim Laden:', err.message);
       setError('Daten konnten nicht geladen werden.');
     } finally {
       setLoading(false);
@@ -40,38 +33,61 @@ export default function Schedule() {
     loadInitialData();
   }, []);
 
-  // 2. Den Turnierplan generieren
-  const generateTournamentSchedule = async () => {
+  const generateTournamentSchedule = () => {
     setError('');
-    
-    // Prüfen der Mindestspieleranzahl
     if (players.length < 3) {
-      setError(`Zu wenige Spieler! Du hast aktuell ${players.length} Spieler angemeldet. Du brauchst mindestens 3 Spieler für einen Turnierplan.`);
+      setError(`Zu wenige Spieler insgesamt! Du brauchst mindestens 3 Spieler im System.`);
       return;
     }
 
     try {
       setLoading(true);
+
+      // 1. Spieler nach Altersklassen (bezogen auf das aktuelle Jahr 2026) vorsortieren
+      const categories = { U12: [], U15: [], U18: [], Open: [] };
       
-      // Einfache, fehlerfreie Generierungs-Logik direkt im Client,
-      // um Fehler mit Imports zu vermeiden: Jeder spielt gegen jeden!
+      players.forEach(player => {
+        const age = 2026 - player.birth_year;
+        if (age <= 12) categories.U12.push(player);
+        else if (age <= 15) categories.U15.push(player);
+        else if (age <= 18) categories.U18.push(player);
+        else categories.Open.push(player);
+      });
+
       const generatedMatches = [];
-      for (let i = 0; i < players.length; i++) {
-        for (let j = i + 1; j < players.length; j++) {
-          generatedMatches.push({
-            id: `m-${i}-${j}`,
-            player1_name: players[i].name,
-            player2_name: players[j].name,
-            court: `Platz ${(generatedMatches.length % 3) + 1}`,
-            status: 'Ausstehend'
-          });
+      let matchCounter = 0;
+
+      // 2. Spiele getrennt für JEDE Altersklasse generieren (Jeder gegen jeden innerhalb der Klasse)
+      Object.keys(categories).forEach(catName => {
+        const catPlayers = categories[catName];
+        
+        // Eine Gruppe benötigt mindestens 2 Spieler, um gegeneinander zu spielen
+        if (catPlayers.length >= 2) {
+          for (let i = 0; i < catPlayers.length; i++) {
+            for (let j = i + 1; j < catPlayers.length; j++) {
+              // Platznummer dynamisch anhand der Admin-Einstellung zuteilen
+              const courtNumber = (matchCounter % courtCount) + 1;
+
+              generatedMatches.push({
+                id: `m-${catName}-${i}-${j}`,
+                category: catName,
+                player1_name: catPlayers[i].name,
+                player2_name: catPlayers[j].name,
+                court: `Platz ${courtNumber}`,
+                status: 'Ausstehend'
+              });
+              matchCounter++;
+            }
+          }
         }
+      });
+
+      if (generatedMatches.length === 0) {
+        setError("In keiner Altersklasse sind genügend Spieler (mindestens 2), um ein Match zu erzeugen!");
+        setMatches([]);
+      } else {
+        setMatches(generatedMatches);
       }
-
-      setMatches(generatedMatches);
-
-      // OPTIONAL: Wenn du eine Tabelle 'matches' in Supabase hast, 
-      // könntest du die Spiele hier mit await supabase.from('matches').insert(...) speichern.
 
     } catch (err) {
       setError('Fehler bei der Generierung des Spielplans.');
@@ -89,60 +105,50 @@ export default function Schedule() {
         </div>
 
         <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>Turnier-Spielplan</h1>
-        <p style={{ color: '#71717a', marginBottom: '32px' }}>
-          Aktuell registrierte Spieler im System: <strong style={{ color: '#09090b' }}>{players.length}</strong>
+        <p style={{ color: '#71717a', marginBottom: '24px' }}>
+          Spieler im System: <strong>{players.length}</strong> | Eingestellte Plätze: <strong>{courtCount}</strong>
         </p>
 
         {error && (
-          <div style={{ padding: '16px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '8px', marginBottom: '24px', fontWeight: '500' }}>
+          <div style={{ padding: '16px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '8px', marginBottom: '24px' }}>
             ⚠️ {error}
           </div>
         )}
 
-        {/* Steuerungs-Button */}
         <button
           onClick={generateTournamentSchedule}
           disabled={loading}
-          style={{
-            backgroundColor: '#0070f3',
-            color: 'white',
-            padding: '14px 28px',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            fontSize: '16px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            marginBottom: '40px'
-          }}
+          style={{ backgroundColor: '#0070f3', color: 'white', padding: '14px 28px', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', marginBottom: '40px' }}
         >
-          {loading ? 'Verarbeite...' : 'Turnierplan jetzt generieren 🚀'}
+          Spielplan nach Altersklassen berechnen 🚀
         </button>
 
-        {/* Anzeige der Spiele */}
         <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>Geplante Begegnungen</h2>
         
         {matches.length === 0 ? (
           <div style={{ padding: '32px', backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '12px', textAlign: 'center', color: '#a1a1aa', fontStyle: 'italic' }}>
-            Noch keine Spiele generiert. Klicke auf den Button oben, um das Turnier zu starten.
+            Noch keine Spiele generiert. Klicke auf den Button oben.
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {matches.map((match) => (
-              <div key={match.id} style={{ backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center shadow-sm' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <span style={{ fontWeight: '6xl', fontSize: '15px' }}>{match.player1_name}</span>
-                  <span style={{ color: '#a1a1aa', fontSize: '12px', fontWeight: 'bold' }}>VS</span>
-                  <span style={{ fontWeight: '6xl', fontSize: '15px' }}>{match.player2_name}</span>
+              <div key={match.id} style={{ backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '12px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', marginRight: '10px' }}>
+                    {match.category}
+                  </span>
+                  <span style={{ fontWeight: 'bold' }}>{match.player1_name}</span>
+                  <span style={{ color: '#a1a1aa', margin: '0 8px', fontSize: '12px' }}>VS</span>
+                  <span style={{ fontWeight: 'bold' }}>{match.player2_name}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <span style={{ backgroundColor: '#f4f4f5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', color: '#71717a' }}>{match.court}</span>
-                  <span style={{ color: '#d97706', fontSize: '13px', fontWeight: '500' }}>● {match.status}</span>
+                  <span style={{ color: '#d97706', fontSize: '13px' }}>● {match.status}</span>
                 </div>
               </div>
             ))}
           </div>
         )}
-
       </div>
     </div>
   );
