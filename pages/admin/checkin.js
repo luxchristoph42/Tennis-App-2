@@ -20,8 +20,8 @@ export default function AdminCheckin() {
   const [inputResult, setInputResult] = useState('');
   const [inputWinner, setInputWinner] = useState('');
 
-  // DAS ADMIN-PASSWORT (Hier kannst du dein Wunschpasswort eintragen)
-  const ADMIN_PASSWORD = "tennis";
+  // DAS ADMIN-PASSWORT
+  const ADMIN_PASSWORD = "tennis2026";
 
   const fetchData = async () => {
     try {
@@ -196,7 +196,7 @@ export default function AdminCheckin() {
     );
   }
 
-  // ANSICHT B: Das eigentliche Admin Control Panel (wenn Passwort korrekt)
+  // ANSICHT B: Das eigentliche Admin Control Panel
   return (
     <div style={{ padding: '24px', fontFamily: 'sans-serif', maxWidth: '900px', margin: '0 auto' }}>
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -219,7 +219,7 @@ export default function AdminCheckin() {
         <div>
           <label style={{ fontSize: '14px', display: 'block', marginBottom: '4px', fontWeight: '500' }}>Plätze auf der Anlage:</label>
           <select value={courts} onChange={handleCourtChange} style={{ padding: '6px', borderRadius: '6px', border: '1px solid #ccc' }}>
-            {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} Plätze</option>)}
+            {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n} Plätze</option>)}
           </select>
         </div>
         <button onClick={generateAndSaveSchedule} style={{ padding: '10px 20px', backgroundColor: '#22c55e', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', marginTop: '18px' }}>
