@@ -198,6 +198,7 @@ export default function AdminCheckin() {
         players={players} 
         onToggleCheck={toggleCheck} 
         onDelPlayer={delPlayer} 
+        loadData={loadData} // <-- Diese Zeile ergänzen
       />
 
       <AdminMatchList 
