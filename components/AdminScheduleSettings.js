@@ -3,12 +3,13 @@ export default function AdminScheduleSettings({
   startT, setStartT,
   dur, setDur,
   separateGender, setSeparateGender,
+  tournamentMode, setTournamentMode,
   onGenerate
 }) {
   return (
     <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: '16px', borderRadius: '8px', marginBottom: '20px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
       <label>Plätze: </label>
-      <select value={courts} onChange={e => { setCourts(parseInt(e.target.value)); localStorage.setItem('t_courts', e.target.value); }}>
+      <select value={courts} onChange={e => setCourts(parseInt(e.target.value))}>
         {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n} Plätze</option>)}
       </select>
       
@@ -21,6 +22,17 @@ export default function AdminScheduleSettings({
         <option value="20">20 Min</option>
         <option value="30">30 Min</option>
         <option value="40">40 Min</option>
+      </select>
+
+      {/* Das neue Auswahlmenü für den Spielmodus */}
+      <label>Modus: </label>
+      <select 
+        value={tournamentMode} 
+        onChange={e => { setTournamentMode(e.target.value); localStorage.setItem('t_mode', e.target.value); }} 
+        style={{ padding: '4px', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: '#fff' }}
+      >
+        <option value="time">Match auf Zeit (Spiele zählen)</option>
+        <option value="sets">Klassisches Satz-System</option>
       </select>
 
       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
