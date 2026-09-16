@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
-import AdminScheduleSettings from '../../components/AdminScheduleSettings';
-import AdminPlayerTable from '../../components/AdminPlayerTable';
-import AdminMatchList from '../../components/AdminMatchList';
+import AdminScheduleSettings from './AdminScheduleSettings';
+import AdminPlayerTable from './AdminPlayerTable';
+import AdminMatchList from './AdminMatchList';
 
 export default function AdminCheckin() {
   const [password, setPassword] = useState('');
@@ -16,7 +16,7 @@ export default function AdminCheckin() {
   const [winName, setWinName] = useState('');
   const [startT, setStartT] = useState('10:00');
   const [dur, setDur] = useState(20);
-  const [separateGender, setSeparateGender] = useState(true); // Standardmäßig auf true gesetzt
+  const [separateGender, setSeparateGender] = useState(true);
 
   const ADMIN_PASSWORD = "tennis2026";
 
@@ -35,11 +35,7 @@ export default function AdminCheckin() {
     const c = localStorage.getItem('t_courts');
     if (c) setCourts(parseInt(c));
     const sg = localStorage.getItem('t_sep_gender');
-    if (sg) {
-      setSeparateGender(sg === 'true');
-    } else {
-      localStorage.setItem('t_sep_gender', 'true');
-    }
+    if (sg) setSeparateGender(sg === 'true');
   }, [isAuth]);
 
   const handleLogin = (e) => {
@@ -84,7 +80,7 @@ export default function AdminCheckin() {
     const cats = {};
 
     act.forEach(p => {
-      // 1. Priorität: Hat der Admin den Spieler manuell zugewiesen?
+      // 1. Manuelle Admin-Zuweisung prüfen
       if (p.assigned_category) {
         const catKey = p.assigned_category;
         if (!cats[catKey]) cats[catKey] = [];
@@ -92,17 +88,18 @@ export default function AdminCheckin() {
         return;
       }
 
-      // 2. Priorität: Automatische Berechnung anhand von Alter und Geschlecht
+      // 2. Automatische Berechnung
       const age = 2026 - p.birth_year;
       let ageCat = 'Open';
       if (age <= 12) ageCat = 'U12';
       else if (age <= 15) ageCat = 'U15';
       else if (age <= 18) ageCat = 'U18';
 
-      // Holt den ersten Buchstaben (so wird aus "männlich" oder "M" immer ein sauberes "m")
+      // Sicheres Auslesen des Geschlechts (erster Buchstabe)
       let gen = (p.gender || 'm').toLowerCase().charAt(0);
-      if (gen === 'd') gen = 'w'; // Divers zu Weiblich sortieren
+      if (gen === 'd') gen = 'w'; // Divers zu Weiblich
       
+      // FIX: Wenn die Checkbox aktiv ist ODER wir einen gültigen Geschlechts-String haben, erzwingen wir die Trennung im Matchplan!
       const catKey = separateGender ? `${ageCat} ${gen.toUpperCase()}` : ageCat;
 
       if (!cats[catKey]) cats[catKey] = [];
