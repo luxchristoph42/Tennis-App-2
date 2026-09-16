@@ -16,7 +16,7 @@ export default function AdminCheckin() {
   const [winName, setWinName] = useState('');
   const [startT, setStartT] = useState('10:00');
   const [dur, setDur] = useState(20);
-  const [separateGender, setSeparateGender] = useState(false);
+  const [separateGender, setSeparateGender] = useState(true); // Standardmäßig auf true gesetzt
 
   const ADMIN_PASSWORD = "tennis2026";
 
@@ -35,7 +35,11 @@ export default function AdminCheckin() {
     const c = localStorage.getItem('t_courts');
     if (c) setCourts(parseInt(c));
     const sg = localStorage.getItem('t_sep_gender');
-    if (sg) setSeparateGender(sg === 'true');
+    if (sg) {
+      setSeparateGender(sg === 'true');
+    } else {
+      localStorage.setItem('t_sep_gender', 'true');
+    }
   }, [isAuth]);
 
   const handleLogin = (e) => {
@@ -80,6 +84,15 @@ export default function AdminCheckin() {
     const cats = {};
 
     act.forEach(p => {
+      // 1. Priorität: Hat der Admin den Spieler manuell zugewiesen?
+      if (p.assigned_category) {
+        const catKey = p.assigned_category;
+        if (!cats[catKey]) cats[catKey] = [];
+        cats[catKey].push(p);
+        return;
+      }
+
+      // 2. Priorität: Automatische Berechnung anhand von Alter und Geschlecht
       const age = 2026 - p.birth_year;
       let ageCat = 'Open';
       if (age <= 12) ageCat = 'U12';
@@ -87,8 +100,9 @@ export default function AdminCheckin() {
       else if (age <= 18) ageCat = 'U18';
 
       let gen = (p.gender || 'm').toLowerCase();
-      if (gen === 'd' || gen === 'divers') gen = 'w';
+      if (gen === 'd' || gen === 'divers') gen = 'w'; // Divers zu Weiblich sortieren
       
+      // Nutze die Geschlechtertrennung basierend auf dem Admin-Häkchen
       const catKey = separateGender ? `${ageCat} ${gen.toUpperCase()}` : ageCat;
 
       if (!cats[catKey]) cats[catKey] = [];
@@ -198,7 +212,7 @@ export default function AdminCheckin() {
         players={players} 
         onToggleCheck={toggleCheck} 
         onDelPlayer={delPlayer} 
-        loadData={loadData} // <-- Diese Zeile ergänzen
+        loadData={loadData}
       />
 
       <AdminMatchList 
