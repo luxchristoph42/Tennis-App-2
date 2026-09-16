@@ -14,6 +14,10 @@ export default function AdminCheckin() {
   const [inputResult, setInputResult] = useState('');
   const [inputWinner, setInputWinner] = useState('');
 
+  // Zeitplanung
+  const [startTime, setStartTime] = useState('10:00');
+  const [matchDuration, setMatchDuration] = useState(20);
+
   const ADMIN_PASSWORD = "tennis2026";
 
   const fetchData = async () => {
@@ -66,12 +70,20 @@ export default function AdminCheckin() {
     }
   };
 
+  const addMinutes = (timeStr, mins) => {
+    const [hrs, mns] = timeStr.split(':').map(Number);
+    const totalMins = hrs * 60 + mns + mins;
+    const newHrs = Math.floor(totalMins / 60) % 24;
+    const newMns = totalMins % 60;
+    return `${String(newHrs).padStart(2, '0')}:${String(newMns).padStart(2, '0')}`;
+  };
+
   const generateSchedule = async () => {
     const active = players.filter(p => p.checked_in);
     if (active.length < 2) return alert('Mindestens 2 eingecheckte Spieler!');
     if (!confirm('Neuen Spielplan erstellen?')) return;
 
-    await supabase.from('matches').delete().neq('id', 0);
+    await supabase.from('matches').delete().neq('id', '0');
     const cats = { U12: [], U15: [], U18: [], Open: [] };
     active.forEach(p => {
       const age = 2026 - p.birth_year;
@@ -83,18 +95,26 @@ export default function AdminCheckin() {
 
     const list = [];
     let cnt = 0;
+    const courtMatchCount = {};
+    for (let c = 1; c <= courts; c++) courtMatchCount[c] = 0;
+
     Object.keys(cats).forEach(c => {
       const arr = cats[c];
       if (arr.length >= 2) {
         for (let i = 0; i < arr.length; i++) {
           for (let j = i + 1; j < arr.length; j++) {
+            const courtNum = (cnt % courts) + 1;
+            const minutesToId = courtMatchCount[courtNum] * parseInt(matchDuration);
+            const matchTime = addMinutes(startTime, minutesToId);
+
             list.push({
               category: c,
               player1_name: arr[i].name,
               player2_name: arr[j].name,
-              court: `Platz ${(cnt % courts) + 1}`,
+              court: `Platz ${courtNum} (${matchTime} Uhr)`,
               status: 'Ausstehend'
             });
+            courtMatchCount[courtNum] += 1;
             cnt++;
           }
         }
@@ -134,15 +154,33 @@ export default function AdminCheckin() {
       
       <h1>Admin Control Panel 🛠️</h1>
       
-      <div style={{ backgroundColor: 'white', border: '1px solid #ccc', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
-        <label>Plätze: </label>
-        <select value={courts} onChange={e => { setCourts(parseInt(e.target.value)); localStorage.setItem('tennis_courts', e.target.value); }}>
-          <option value="1">1 Platz</option>
-          <option value="2">2 Plätze</option>
-          <option value="3">3 Plätze</option>
-          <option value="4">4 Plätze</option>
-        </select>
-        <button onClick={generateSchedule} style={{ marginLeft: '20px', padding: '6px 12px', backgroundColor: '#22c55e', color: 'white', border: 'none', borderRadius: '4px' }}>Spielplan generieren 🚀</button>
+      <div style={{ backgroundColor: 'white', border: '1px solid #ccc', padding: '16px', borderRadius: '8px', marginBottom: '20px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div>
+          <label style={{ fontWeight: 'bold' }}>Plätze: </label>
+          <select value={courts} onChange={e => { setCourts(parseInt(e.target.value)); localStorage.setItem('tennis_courts', e.target.value); }}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+              <option key={n} value={n}>{n} {n === 1 ? 'Platz' : 'Plätze'}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label style={{ fontWeight: 'bold' }}>Startzeit: </label>
+          <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+        </div>
+
+        <div>
+          <label style={{ fontWeight: 'bold' }}>Dauer: </label>
+          <select value={matchDuration} onChange={e => setMatchDuration(parseInt(e.target.value))}>
+            <option value="15">15 Min</option>
+            <option value="20">20 Min</option>
+            <option value="30">30 Min</option>
+            <option value="40">40 Min</option>
+            <option value="60">60 Min</option>
+          </select>
+        </div>
+
+        <button onClick={generateSchedule} style={{ padding: '8px 12px', backgroundColor: '#22c55e', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>Spielplan generieren 🚀</button>
       </div>
 
       <h2>Spieler ({players.length})</h2>
@@ -172,6 +210,7 @@ export default function AdminCheckin() {
               <span><strong>[{m.category}]</strong> {m.player1_name} VS {m.player2_name}</span>
               <span style={{ color: m.status === 'Beendet' ? 'green' : 'orange' }}>{m.status} {m.result && `(${m.result})`}</span>
             </div>
+            <div style={{ fontSize: '12px', color: '#666', margin: '4px 0' }}>📍 {m.court}</div>
             {editingMatchId === m.id ? (
               <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
                 <input type="text" placeholder="z.B. 6:4, 6:2" value={inputResult} onChange={e => setInputResult(e.target.value)} />
