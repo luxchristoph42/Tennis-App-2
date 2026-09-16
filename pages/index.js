@@ -18,8 +18,6 @@ export default function Home() {
 
   useEffect(() => {
     fetchMatches();
-    
-    // Modus aus dem LocalStorage auslesen, um die Tabelle richtig zu rendern
     const tm = localStorage.getItem('t_mode');
     if (tm) setTournamentMode(tm);
 
@@ -33,7 +31,6 @@ export default function Home() {
     return match ? match : courtString;
   };
 
-  // --- LOGIK FÜR TAB 1: SPIELPLAN ---
   const groupedMatches = {};
   matches.forEach(m => {
     const courtName = getCourtName(m.court);
@@ -42,20 +39,17 @@ export default function Home() {
   });
   const sortedCourts = Object.keys(groupedMatches).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
-  // --- LOGIK FÜR TAB 2: RANGLISTEN & TABELLEN ---
   const categoriesMap = {};
   matches.forEach(m => {
     if (!m.category.includes(' - Gr. ')) return;
     if (!categoriesMap[m.category]) categoriesMap[m.category] = [];
     categoriesMap[m.category].push(m);
   });
-
   const sortedCategories = Object.keys(categoriesMap).sort();
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#fafafa', fontFamily: 'sans-serif', color: '#1c1917', margin: 0, padding: 0 }}>
       
-      {/* Schlichte Navigationsleiste */}
       <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e7e5e4', padding: '16px 24px' }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.025em' }}>
@@ -74,8 +68,7 @@ export default function Home() {
 
       <main style={{ maxWidth: '1000px', margin: '40px auto', padding: '0 24px' }}>
         
-        {/* Cleane Tab-Navigation ohne Icons */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #e7e5e4', marginBottom: '32px', justify_content: 'flex-start', gap: '24px' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid #e7e5e4', marginBottom: '32px', justifyContent: 'flex-start', gap: '24px' }}>
           <button 
             onClick={() => setActiveTab('schedule')} 
             style={{ padding: '12px 4px', fontSize: '15px', fontWeight: activeTab === 'schedule' ? '700' : '500', cursor: 'pointer', border: 'none', background: 'none', borderBottom: activeTab === 'schedule' ? '2px solid #1c1917' : '2px solid transparent', color: activeTab === 'schedule' ? '#1c1917' : '#78716c', transition: 'all 0.15s ease' }}
@@ -98,15 +91,12 @@ export default function Home() {
           </div>
         ) : activeTab === 'schedule' ? (
           
-          /* ================= TAB 1: CLEANER SPIELPLAN ================= */
           <LiveScheduleView sortedCourts={sortedCourts} groupedMatches={groupedMatches} />
           
         ) : (
           
-          /* ================= TAB 2: CLEANER RANGLISTEN ================= */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             {sortedCategories.map(catKey => {
-              // Nutzt die exakte Berechnungslogik aus tournamentLogic.js
               const groupRankings = calculateStandings(categoriesMap[catKey], tournamentMode);
 
               return (
@@ -130,12 +120,22 @@ export default function Home() {
                     <tbody>
                       {groupRankings.map((player, index) => {
                         const diffSign = player.diff > 0 ? '+' : '';
+                        const isTopTwo = index < 2; // Die ersten beiden Plätze ermitteln
+                        
                         return (
-                          <tr key={player.name} style={{ borderBottom: '1px solid #f5f5f4', backgroundColor: index < 2 ? '#fafaf9' : 'transparent' }}>
-                            <td style={{ padding: '12px 12px', fontWeight: '600', color: index < 2 ? '#1c1917' : '#78716c' }}>
+                          <tr 
+                            key={player.name} 
+                            style={{ 
+                              borderBottom: '1px solid #f5f5f4', 
+                              // Grünliche Hintergrundfarbe für Platz 1 und Platz 2
+                              backgroundColor: isTopTwo ? '#f0fdf4' : 'transparent',
+                              transition: 'background-color 0.2s'
+                            }}
+                          >
+                            <td style={{ padding: '12px 12px', fontWeight: isTopTwo ? '600' : '400', color: isTopTwo ? '#16a34a' : '#78716c' }}>
                               {index + 1}.
                             </td>
-                            <td style={{ padding: '12px 12px', fontWeight: index < 2 ? '600' : '400' }}>
+                            <td style={{ padding: '12px 12px', fontWeight: isTopTwo ? '600' : '400', color: '#1c1917' }}>
                               {player.name}
                             </td>
                             <td style={{ padding: '12px 12px', textAlign: 'center', color: '#78716c' }}>
@@ -153,7 +153,7 @@ export default function Home() {
                     </tbody>
                   </table>
                   <div style={{ marginTop: '14px', fontSize: '12px', color: '#78716c' }}>
-                    Die besten zwei Platzierungen qualifizieren sich für die Endrunde.
+                    Die grün markierten Plätze 1 & 2 qualifizieren sich für die K.-o.-Endrunde.
                   </div>
                 </div>
               );
