@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabase'; // Passe den Pfad an, falls nötig
+import { supabase } from '../lib/supabase'; // Passe den Pfad an, falls nötig
 
 export default function AdminPlayerTable({ players, onToggleCheck, onDelPlayer, loadData }) {
   
