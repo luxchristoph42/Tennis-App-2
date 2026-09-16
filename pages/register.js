@@ -3,6 +3,7 @@ import { useState } from 'react';
 export default function Register() {
   const [name, setName] = useState('');
   const [birthYear, setBirthYear] = useState('');
+  const [gender, setGender] = useState('m'); // Standardwert: männlich
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,11 @@ export default function Register() {
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, birth_year: parseInt(birthYear) }),
+        body: JSON.stringify({ 
+          name, 
+          birth_year: parseInt(birthYear),
+          gender: gender 
+        }),
       });
 
       const data = await response.json();
@@ -80,6 +85,21 @@ export default function Register() {
             onChange={(e) => setBirthYear(e.target.value)} 
             style={{ width: '100%', padding: '8px', boxSizing: 'border-box', border: '1px solid #ccc', borderRadius: '6px' }} 
           />
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+            Geschlecht
+          </label>
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            style={{ width: '100%', padding: '8px', boxSizing: 'border-box', border: '1px solid #ccc', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer' }}
+          >
+            <option value="m">Männlich (m)</option>
+            <option value="w">Weiblich (w)</option>
+            <option value="d">Divers (d)</option>
+          </select>
         </div>
         
         <button 
