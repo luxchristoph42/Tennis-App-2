@@ -16,9 +16,10 @@ export default function AdminCheckin() {
   const [resText, setResText] = useState('');
   const [winName, setWinName] = useState('');
   const [startT, setStartT] = useState('10:00');
+  const [endT, setEndT] = useState('16:00');
   const [dur, setDur] = useState(20);
   const [separateGender, setSeparateGender] = useState(true);
-  const [tournamentMode, setTournamentMode] = useState('time'); // Neu: 'time' oder 'sets'
+  const [tournamentMode, setTournamentMode] = useState('time');
   const [activeTab, setActiveTab] = useState('setup');
 
   const ADMIN_PASSWORD = "tennis2026";
@@ -41,6 +42,8 @@ export default function AdminCheckin() {
     if (sg) setSeparateGender(sg === 'true');
     const tm = localStorage.getItem('t_mode');
     if (tm) setTournamentMode(tm);
+    const te = localStorage.getItem('t_end_time');
+    if (te) setEndT(te);
   }, [isAuth]);
 
   const handleLogin = (e) => {
@@ -71,7 +74,7 @@ export default function AdminCheckin() {
   };
 
   const genSchedule = async () => {
-    const { finalM, error } = buildTournamentSchedule(players, courts, startT, dur, separateGender);
+    const { finalM, error } = buildTournamentSchedule(players, courts, startT, endT, dur, separateGender);
     if (error) return alert(error);
     if (!confirm('Spielplan neu erstellen?')) return;
 
@@ -139,7 +142,7 @@ export default function AdminCheckin() {
 
       {activeTab === 'setup' ? (
         <div>
-          <AdminScheduleSettings courts={courts} setCourts={setCourts} startT={startT} setStartT={setStartT} dur={dur} setDur={setDur} separateGender={separateGender} setSeparateGender={setSeparateGender} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} onGenerate={genSchedule} />
+          <AdminScheduleSettings courts={courts} setCourts={setCourts} startT={startT} setStartT={startT} endT={endT} setEndT={setEndT} dur={dur} setDur={setDur} separateGender={separateGender} setSeparateGender={setSeparateGender} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} onGenerate={genSchedule} />
           <AdminPlayerTable players={players} onToggleCheck={toggleCheck} onDelPlayer={delPlayer} loadData={loadData} />
         </div>
       ) : (
