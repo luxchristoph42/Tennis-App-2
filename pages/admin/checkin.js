@@ -68,11 +68,10 @@ export default function AdminCheckin() {
   };
 
   const genSchedule = async () => {
-    // Aufruf der ausgelagerten Turnier-Logik
     const { finalM, error } = buildTournamentSchedule(players, courts, startT, dur, separateGender);
     
     if (error) return alert(error);
-    if (!confirm('Spielplan inklusive Halbfinals & Finale neu erstellen?')) return;
+    if (!confirm('Spielplan inklusive K.-o.-Runde neu erstellen?')) return;
 
     await supabase.from('matches').delete().neq('id', '0');
     
