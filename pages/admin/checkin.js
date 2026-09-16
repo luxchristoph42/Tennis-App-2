@@ -99,10 +99,10 @@ export default function AdminCheckin() {
       else if (age <= 15) ageCat = 'U15';
       else if (age <= 18) ageCat = 'U18';
 
-      let gen = (p.gender || 'm').toLowerCase();
-      if (gen === 'd' || gen === 'divers') gen = 'w'; // Divers zu Weiblich sortieren
+      // Holt den ersten Buchstaben (so wird aus "männlich" oder "M" immer ein sauberes "m")
+      let gen = (p.gender || 'm').toLowerCase().charAt(0);
+      if (gen === 'd') gen = 'w'; // Divers zu Weiblich sortieren
       
-      // Nutze die Geschlechtertrennung basierend auf dem Admin-Häkchen
       const catKey = separateGender ? `${ageCat} ${gen.toUpperCase()}` : ageCat;
 
       if (!cats[catKey]) cats[catKey] = [];
