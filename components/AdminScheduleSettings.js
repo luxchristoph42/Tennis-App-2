@@ -1,6 +1,7 @@
 export default function AdminScheduleSettings({
   courts, setCourts,
   startT, setStartT,
+  endT, setEndT, // Neu
   dur, setDur,
   separateGender, setSeparateGender,
   tournamentMode, setTournamentMode,
@@ -15,6 +16,10 @@ export default function AdminScheduleSettings({
       
       <label>Start: </label>
       <input type="time" value={startT} onChange={e => setStartT(e.target.value)} />
+
+      {/* Neues Eingabefeld für das Turnierende */}
+      <label>Turnierende: </label>
+      <input type="time" value={endT} onChange={e => { setEndT(e.target.value); localStorage.setItem('t_end_time', e.target.value); }} />
       
       <label>Dauer: </label>
       <select value={dur} onChange={e => setDur(parseInt(e.target.value))}>
@@ -24,13 +29,8 @@ export default function AdminScheduleSettings({
         <option value="40">40 Min</option>
       </select>
 
-      {/* Das neue Auswahlmenü für den Spielmodus */}
       <label>Modus: </label>
-      <select 
-        value={tournamentMode} 
-        onChange={e => { setTournamentMode(e.target.value); localStorage.setItem('t_mode', e.target.value); }} 
-        style={{ padding: '4px', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: '#fff' }}
-      >
+      <select value={tournamentMode} onChange={e => { setTournamentMode(e.target.value); localStorage.setItem('t_mode', e.target.value); }} style={{ padding: '4px', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: '#fff' }}>
         <option value="time">Match auf Zeit (Spiele zählen)</option>
         <option value="sets">Klassisches Satz-System</option>
       </select>
