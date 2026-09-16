@@ -4,7 +4,7 @@ import Link from 'next/link';
 import AdminScheduleSettings from '../../components/AdminScheduleSettings';
 import AdminPlayerTable from '../../components/AdminPlayerTable';
 import AdminMatchList from '../../components/AdminMatchList';
-import { buildTournamentSchedule } from '../../lib/tournamentLogic';
+import { buildTournamentSchedule, checkAndAdvanceGroup, checkAndAdvanceKO } from '../../lib/tournamentLogic';
 
 export default function AdminCheckin() {
   const [password, setPassword] = useState('');
@@ -85,7 +85,32 @@ export default function AdminCheckin() {
 
   const saveRes = async (id) => {
     if (!winName) return alert('Sieger wählen!');
+    
+    // 1. Hole das aktuelle Match vor dem Update, um die Kategorie zu kennen
+    const currentMatch = matches.find(m => m.id === id);
+    if (!currentMatch) return alert('Match nicht gefunden!');
+
+    // 2. Ergebnis in der Datenbank speichern
     await supabase.from('matches').update({ result: resText, winner: winName, status: 'Beendet' }).eq('id', id);
+    
+    // 3. Automatisches Vorrücken berechnen
+    if (currentMatch.category.includes(' - Gr. ')) {
+      // Fall A: Ein Gruppenspiel wurde beendet
+      const [categoryName, groupPart] = currentMatch.category.split(' - Gr. ');
+      const groupLetter = groupPart ? groupPart.trim() : null;
+      
+      if (categoryName && groupLetter) {
+        await checkAndAdvanceGroup(supabase, categoryName, groupLetter);
+      }
+    } else if (currentMatch.category.includes(' - Halbfinale')) {
+      // Fall B: Ein Halbfinalspiel wurde beendet
+      const [categoryName] = currentMatch.category.split(' - Halbfinale');
+      if (categoryName) {
+        await checkAndAdvanceKO(supabase, categoryName.trim(), currentMatch.category);
+      }
+    }
+
+    // 4. Formular-States zurücksetzen und Daten neu laden
     setEditId(null);
     setResText('');
     setWinName('');
