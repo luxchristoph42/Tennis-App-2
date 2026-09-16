@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function Schedule() {
   const [matches, setMatches] = useState([]);
-  const [activeTab, setActiveTab] = useState('matches'); // 'matches' oder 'table'
+  const [activeTab, setActiveTab] = useState('matches');
   const [loading, setLoading] = useState(true);
 
   const loadMatches = async () => {
@@ -21,29 +21,24 @@ export default function Schedule() {
 
   useEffect(() => {
     loadMatches();
-    // Echtzeit-Aktualisierung alle 10 Sekunden für die Zuschauer auf der Anlage
     const interval = setInterval(loadMatches, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  // DIKTATORISCHE LIVE-RANGLISTEN BERECHNUNG
   const calculateStandings = () => {
-    const standings = {}; // Struktur: { 'Klasse': { 'Spielername': { wins: 0, matches: 0 } } }
-
+    const standings = {};
     matches.forEach(m => {
       const cat = m.category;
       if (!standings[cat]) standings[cat] = {};
-      
       if (!standings[cat][m.player1_name]) standings[cat][m.player1_name] = { name: m.player1_name, wins: 0, played: 0, points: 0 };
       if (!standings[cat][m.player2_name]) standings[cat][m.player2_name] = { name: m.player2_name, wins: 0, played: 0, points: 0 };
 
       if (m.status === 'Beendet') {
         standings[cat][m.player1_name].played += 1;
         standings[cat][m.player2_name].played += 1;
-        
         if (m.winner === m.player1_name) {
           standings[cat][m.player1_name].wins += 1;
-          standings[cat][m.player1_name].points += 2; // 2 Punkte für Sieg
+          standings[cat][m.player1_name].points += 2;
         } else if (m.winner === m.player2_name) {
           standings[cat][m.player2_name].wins += 1;
           standings[cat][m.player2_name].points += 2;
@@ -51,12 +46,10 @@ export default function Schedule() {
       }
     });
 
-    // In Arrays umwandeln und nach Punkten sortieren
     const sortedCategories = {};
     Object.keys(standings).forEach(cat => {
       sortedCategories[cat] = Object.values(standings[cat]).sort((a, b) => b.points - a.points);
     });
-
     return sortedCategories;
   };
 
@@ -72,25 +65,17 @@ export default function Schedule() {
 
         <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '24px' }}>Turnier-Zentrale 🎾</h1>
 
-        {/* REITER / TABS UMSCHALTUNG */}
         <div style={{ display: 'flex', borderBottom: '2px solid #e4e4e7', marginBottom: '24px', gap: '8px' }}>
-          <button 
-            onClick={() => setActiveTab('matches')}
-            style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'matches' ? '3px solid #0070f3' : 'none', color: activeTab === 'matches' ? '#0070f3' : '#71717a' }}
-          >
-            Spiele & Courts 📅
+          <button onClick={() => setActiveTab('matches')} style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'matches' ? '3px solid #0070f3' : 'none', color: activeTab === 'matches' ? '#0070f3' : '#71717a' }}>
+            Spiele & Zeitplan 📅
           </button>
-          <button 
-            onClick={() => setActiveTab('table')}
-            style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'table' ? '3px solid #0070f3' : 'none', color: activeTab === 'table' ? '#0070f3' : '#71717a' }}
-          >
+          <button onClick={() => setActiveTab('table')} style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', border: 'none', background: 'none', cursor: 'pointer', borderBottom: activeTab === 'table' ? '3px solid #0070f3' : 'none', color: activeTab === 'table' ? '#0070f3' : '#71717a' }}>
             Live-Rangliste 🏆
           </button>
         </div>
 
         {loading && <p style={{ color: '#71717a' }}>Aktualisiere Live-Daten...</p>}
 
-        {/* ANSICHT 1: SPIELE */}
         {activeTab === 'matches' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {matches.length === 0 ? (
@@ -105,9 +90,9 @@ export default function Schedule() {
                     <span style={{ fontWeight: match.winner === match.player2_name ? 'bold' : 'normal', color: match.winner === match.player2_name ? '#0070f3' : 'inherit' }}>{match.player2_name}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <span style={{ backgroundColor: '#f4f4f5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>{match.court}</span>
+                    <span style={{ backgroundColor: '#f4f4f5', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '500' }}>📍 {match.court}</span>
                     <span style={{ color: match.status === 'Beendet' ? 'green' : '#d97706', fontSize: '13px', fontWeight: '500' }}>
-                      {match.status === 'Beendet' ? `🎉 ${match.result || 'Beendet'}` : '● Aktiv'}
+                      {match.status === 'Beendet' ? `🎉 ${match.result || 'Beendet'}` : '● Bereit'}
                     </span>
                   </div>
                 </div>
@@ -116,14 +101,13 @@ export default function Schedule() {
           </div>
         )}
 
-        {/* ANSICHT 2: LIVE-TABELLE */}
         {activeTab === 'table' && (
           <div>
             {Object.keys(standingsData).length === 0 ? (
-              <p style={{ fontStyle: 'italic', color: '#a1a1aa' }}>Noch keine Tabellendaten verfügbar. Spiele müssen dafür beendet sein.</p>
+              <p style={{ fontStyle: 'italic', color: '#a1a1aa' }}>Noch keine Tabellendaten verfügbar.</p>
             ) : (
               Object.keys(standingsData).map(cat => (
-                <div key={cat} style={{ backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '16px', padding: '20px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <div key={cat} style={{ backgroundColor: 'white', border: '1px solid #e4e4e7', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
                   <h3 style={{ margin: '0 0 12px 0', color: '#166534', fontSize: '18px', borderBottom: '1px solid #eee', paddingBottom: '6px' }}>Altersklasse {cat}</h3>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                     <thead>
