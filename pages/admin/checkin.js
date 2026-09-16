@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
-import AdminScheduleSettings from './AdminScheduleSettings';
-import AdminPlayerTable from './AdminPlayerTable';
-import AdminMatchList from './AdminMatchList';
+import AdminScheduleSettings from '../../components/AdminScheduleSettings';
+import AdminPlayerTable from '../../components/AdminPlayerTable';
+import AdminMatchList from '../../components/AdminMatchList';
 
 export default function AdminCheckin() {
   const [password, setPassword] = useState('');
