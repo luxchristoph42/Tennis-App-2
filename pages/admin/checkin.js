@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
+import AdminScheduleSettings from '../../components/AdminScheduleSettings';
+import AdminPlayerTable from '../../components/AdminPlayerTable';
 
 export default function AdminCheckin() {
   const [password, setPassword] = useState('');
@@ -13,6 +15,7 @@ export default function AdminCheckin() {
   const [winName, setWinName] = useState('');
   const [startT, setStartT] = useState('10:00');
   const [dur, setDur] = useState(20);
+  const [separateGender, setSeparateGender] = useState(false);
 
   const ADMIN_PASSWORD = "tennis2026";
 
@@ -30,6 +33,8 @@ export default function AdminCheckin() {
     }
     const c = localStorage.getItem('t_courts');
     if (c) setCourts(parseInt(c));
+    const sg = localStorage.getItem('t_sep_gender');
+    if (sg) setSeparateGender(sg === 'true');
   }, [isAuth]);
 
   const handleLogin = (e) => {
@@ -71,13 +76,23 @@ export default function AdminCheckin() {
     if (!confirm('Spielplan neu erstellen?')) return;
 
     await supabase.from('matches').delete().neq('id', '0');
-    const cats = { U12: [], U15: [], U18: [], Open: [] };
+    const cats = {};
+
     act.forEach(p => {
       const age = 2026 - p.birth_year;
-      if (age <= 12) cats.U12.push(p);
-      else if (age <= 15) cats.U15.push(p);
-      else if (age <= 18) cats.U18.push(p);
-      else cats.Open.push(p);
+      let ageCat = 'Open';
+      if (age <= 12) ageCat = 'U12';
+      else if (age <= 15) ageCat = 'U15';
+      else if (age <= 18) ageCat = 'U18';
+
+      // Logik für Geschlechtertrennung: 'd' (divers) wird automatisch zu 'w' (weiblich) sortiert
+      let gen = (p.gender || 'm').toLowerCase();
+      if (gen === 'd' || gen === 'divers') gen = 'w';
+      
+      const catKey = separateGender ? `${ageCat} ${gen.toUpperCase()}` : ageCat;
+
+      if (!cats[catKey]) cats[catKey] = [];
+      cats[catKey].push(p);
     });
 
     const getDist = (cnt) => {
@@ -171,41 +186,19 @@ export default function AdminCheckin() {
       </div>
       <h1>Admin Control Panel 🛠️</h1>
       
-      <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: '16px', borderRadius: '8px', marginBottom: '20px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-        <label>Plätze: </label>
-        <select value={courts} onChange={e => { setCourts(parseInt(e.target.value)); localStorage.setItem('t_courts', e.target.value); }}>
-          {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n} Plätze</option>)}
-        </select>
-        <label>Start: </label>
-        <input type="time" value={startT} onChange={e => setStartT(e.target.value)} />
-        <label>Dauer: </label>
-        <select value={dur} onChange={e => setDur(parseInt(e.target.value))}>
-          <option value="15">15 Min</option>
-          <option value="20">20 Min</option>
-          <option value="30">30 Min</option>
-          <option value="40">40 Min</option>
-        </select>
-        <button onClick={genSchedule} style={{ padding: '6px 12px', backgroundColor: '#22c55e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Generieren 🚀</button>
-      </div>
+      <AdminScheduleSettings 
+        courts={courts} setCourts={setCourts}
+        startT={startT} setStartT={setStartT}
+        dur={dur} setDur={setDur}
+        separateGender={separateGender} setSeparateGender={setSeparateGender}
+        onGenerate={genSchedule}
+      />
 
-      <h2>Spieler ({players.length})</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '30px' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#f4f4f5', textAlign: 'left' }}><th style={{ padding: '8px' }}>Name</th><th style={{ padding: '8px' }}>Status</th><th style={{ padding: '8px', textAlign: 'right' }}>Aktion</th></tr>
-        </thead>
-        <tbody>
-          {players.map(p => (
-            <tr key={p.id} style={{ borderBottom: '1px solid #eee' }}>
-              <td style={{ padding: '8px' }}>{p.name} ({2026 - p.birth_year})</td>
-              <td>{p.checked_in ? '🟢 Eingecheckt' : '🟡 Wartend'}</td>
-              <td style={{ textAlign: 'right' }}>
-                <button onClick={() => toggleCheck(p)} style={{ marginRight: '6px' }}>Status</button>
-                <button onClick={() => delPlayer(p.id)} style={{ color: 'red', border: 'none', background: 'none' }}>🗑️</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <AdminPlayerTable 
+        players={players} 
+        onToggleCheck={toggleCheck} 
+        onDelPlayer={delPlayer} 
+      />
 
       <h2>Ergebnisse ({matches.length})</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
