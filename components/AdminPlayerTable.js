@@ -1,22 +1,24 @@
 import { supabase } from '../lib/supabase'; // Passe den Pfad an, falls nötig
 
 export default function AdminPlayerTable({ players, onToggleCheck, onDelPlayer, loadData }) {
-  
+
   // Hilfsfunktion zur Ermittlung der Kategorie (berücksichtigt manuelle Überschreibung)
   const getPlayerCategory = (p) => {
-    // Falls der Admin manuell eine Kategorie gesetzt hat, nutzen wir diese
+    // 1. Falls der Admin manuell eine Kategorie gesetzt hat, nutzen wir diese sofort
     if (p.assigned_category) return p.assigned_category;
 
-    // Standard automatische Berechnung anhand des Geburtsjahres
+    // 2. Automatische Berechnung anhand des Geburtsjahres
     const age = 2026 - p.birth_year;
     let ageCat = 'Open';
     if (age <= 12) ageCat = 'U12';
     else if (age <= 15) ageCat = 'U15';
     else if (age <= 18) ageCat = 'U18';
 
-    let gen = (p.gender || 'm').toLowerCase();
-    if (gen === 'd' || gen === 'divers') gen = 'w'; // Divers wird zu Weiblich sortiert
+    // Holt den ersten Buchstaben des Geschlechts und macht ihn klein (m, w, d)
+    let gen = (p.gender || 'm').toLowerCase().charAt(0);
+    if (gen === 'd') gen = 'w'; // Divers wird zu Weiblich sortiert
 
+    // Gibt exakt das gleiche Format wie checkin.js zurück (z.B. "U15 M" oder "U15 W")
     return `${ageCat} ${gen.toUpperCase()}`;
   };
 
