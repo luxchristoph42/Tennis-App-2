@@ -275,12 +275,40 @@ export default function AdminCheckin() {
             color: activeTab === 'live' ? '#0070f3' : '#71717a',
             transition: 'all 0.2s'
           }}
-        >
+               >
           🏆 Live-Spiele & Ergebnisse ({matches.filter(m => m.status !== 'Beendet').length} aktiv)
         </button>
       </div>
 
       {activeTab === 'setup' ? (
         <div>
+          <AdminScheduleSettings 
+            courts={courts} setCourts={setCourts}
+            startT={startT} setStartT={setStartT}
+            dur={dur} setDur={setDur}
+            separateGender={separateGender} setSeparateGender={setSeparateGender}
+            onGenerate={genSchedule}
+          />
+
+          <AdminPlayerTable 
+            players={players} 
+            onToggleCheck={toggleCheck} 
+            onDelPlayer={delPlayer} 
+            loadData={loadData}
+          />
+        </div>
+      ) : (
+        <AdminMatchList 
+          matches={matches}
+          editId={editId}
+          resText={resText} setResText={setResText}
+          winName={winName} setWinName={setWinName}
+          onStartEdit={startEdit}
+          onSaveRes={saveRes}
+          setEditId={setEditId}
+        />
+      )}
+    </div>
   );
 }
+ 
