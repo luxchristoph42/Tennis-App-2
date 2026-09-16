@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../lib/supabase';
 import Link from 'next/link';
 import AdminScheduleSettings from '../../components/AdminScheduleSettings';
 import AdminPlayerTable from '../../components/AdminPlayerTable';
