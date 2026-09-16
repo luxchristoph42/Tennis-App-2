@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
-import LiveScheduleView from './LiveScheduleView'; // Weil die Hilfsdateien in pages/ liegen
+import LiveScheduleView from '../components/LiveScheduleView';
 
 export default function Home() {
   const [matches, setMatches] = useState([]);
