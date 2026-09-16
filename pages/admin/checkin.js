@@ -18,6 +18,7 @@ export default function AdminCheckin() {
   const [startT, setStartT] = useState('10:00');
   const [dur, setDur] = useState(20);
   const [separateGender, setSeparateGender] = useState(true);
+  const [tournamentMode, setTournamentMode] = useState('time'); // Neu: 'time' oder 'sets'
   const [activeTab, setActiveTab] = useState('setup');
 
   const ADMIN_PASSWORD = "tennis2026";
@@ -38,6 +39,8 @@ export default function AdminCheckin() {
     if (c) setCourts(parseInt(c));
     const sg = localStorage.getItem('t_sep_gender');
     if (sg) setSeparateGender(sg === 'true');
+    const tm = localStorage.getItem('t_mode');
+    if (tm) setTournamentMode(tm);
   }, [isAuth]);
 
   const handleLogin = (e) => {
@@ -69,48 +72,33 @@ export default function AdminCheckin() {
 
   const genSchedule = async () => {
     const { finalM, error } = buildTournamentSchedule(players, courts, startT, dur, separateGender);
-    
     if (error) return alert(error);
-    if (!confirm('Spielplan inklusive K.-o.-Runde neu erstellen?')) return;
+    if (!confirm('Spielplan neu erstellen?')) return;
 
     await supabase.from('matches').delete().neq('id', '0');
-    
-    if (finalM && finalM.length > 0) {
-      await supabase.from('matches').insert(finalM);
-    }
-    
+    if (finalM && finalM.length > 0) await supabase.from('matches').insert(finalM);
     setActiveTab('live');
     loadData();
   };
 
   const saveRes = async (id) => {
     if (!winName) return alert('Sieger wählen!');
-    
-    // 1. Hole das aktuelle Match vor dem Update, um die Kategorie zu kennen
     const currentMatch = matches.find(m => m.id === id);
-    if (!currentMatch) return alert('Match nicht gefunden!');
+    if (!currentMatch) return;
 
-    // 2. Ergebnis in der Datenbank speichern
     await supabase.from('matches').update({ result: resText, winner: winName, status: 'Beendet' }).eq('id', id);
     
-    // 3. Automatisches Vorrücken berechnen
     if (currentMatch.category.includes(' - Gr. ')) {
-      // Fall A: Ein Gruppenspiel wurde beendet
       const [categoryName, groupPart] = currentMatch.category.split(' - Gr. ');
       const groupLetter = groupPart ? groupPart.trim() : null;
-      
       if (categoryName && groupLetter) {
-        await checkAndAdvanceGroup(supabase, categoryName, groupLetter);
+        await checkAndAdvanceGroup(supabase, categoryName, groupLetter, tournamentMode);
       }
     } else if (currentMatch.category.includes(' - Halbfinale')) {
-      // Fall B: Ein Halbfinalspiel wurde beendet
       const [categoryName] = currentMatch.category.split(' - Halbfinale');
-      if (categoryName) {
-        await checkAndAdvanceKO(supabase, categoryName.trim(), currentMatch.category);
-      }
+      if (categoryName) await checkAndAdvanceKO(supabase, categoryName.trim(), currentMatch.category);
     }
 
-    // 4. Formular-States zurücksetzen und Daten neu laden
     setEditId(null);
     setResText('');
     setWinName('');
@@ -145,17 +133,13 @@ export default function AdminCheckin() {
       <h1>Admin Control Panel 🛠️</h1>
       
       <div style={{ display: 'flex', borderBottom: '2px solid #e4e4e7', marginBottom: '24px', gap: '8px' }}>
-        <button onClick={() => setActiveTab('setup')} style={{ padding: '10px 20px', fontSize: '1em', fontWeight: 'bold', cursor: 'pointer', border: 'none', background: 'none', borderBottom: activeTab === 'setup' ? '3px solid #0070f3' : '3px solid transparent', color: activeTab === 'setup' ? '#0070f3' : '#71717a' }}>
-          ⚙️ Spieler- & Turnierverwaltung
-        </button>
-        <button onClick={() => setActiveTab('live')} style={{ padding: '10px 20px', fontSize: '1em', fontWeight: 'bold', cursor: 'pointer', border: 'none', background: 'none', borderBottom: activeTab === 'live' ? '3px solid #0070f3' : '3px solid transparent', color: activeTab === 'live' ? '#0070f3' : '#71717a' }}>
-          🏆 Live-Spiele & Ergebnisse ({matches.filter(m => m.status !== 'Beendet').length} aktiv)
-        </button>
+        <button onClick={() => setActiveTab('setup')} style={{ padding: '10px 20px', fontSize: '1em', fontWeight: 'bold', cursor: 'pointer', border: 'none', background: 'none', borderBottom: activeTab === 'setup' ? '3px solid #0070f3' : '3px solid transparent', color: activeTab === 'setup' ? '#0070f3' : '#71717a' }}>⚙️ Spieler- & Turnierverwaltung</button>
+        <button onClick={() => setActiveTab('live')} style={{ padding: '10px 20px', fontSize: '1em', fontWeight: 'bold', cursor: 'pointer', border: 'none', background: 'none', borderBottom: activeTab === 'live' ? '3px solid #0070f3' : '3px solid transparent', color: activeTab === 'live' ? '#0070f3' : '#71717a' }}>🏆 Live-Spiele & Ergebnisse</button>
       </div>
 
       {activeTab === 'setup' ? (
         <div>
-          <AdminScheduleSettings courts={courts} setCourts={setCourts} startT={startT} setStartT={setStartT} dur={dur} setDur={setDur} separateGender={separateGender} setSeparateGender={setSeparateGender} onGenerate={genSchedule} />
+          <AdminScheduleSettings courts={courts} setCourts={setCourts} startT={startT} setStartT={setStartT} dur={dur} setDur={setDur} separateGender={separateGender} setSeparateGender={setSeparateGender} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} onGenerate={genSchedule} />
           <AdminPlayerTable players={players} onToggleCheck={toggleCheck} onDelPlayer={delPlayer} loadData={loadData} />
         </div>
       ) : (
