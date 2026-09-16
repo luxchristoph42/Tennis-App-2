@@ -17,8 +17,6 @@ export default function AdminCheckin() {
   const [startT, setStartT] = useState('10:00');
   const [dur, setDur] = useState(20);
   const [separateGender, setSeparateGender] = useState(true);
-  
-  // State für die Tabs: 'setup' oder 'live'
   const [activeTab, setActiveTab] = useState('setup');
 
   const ADMIN_PASSWORD = "tennis2026";
@@ -77,7 +75,7 @@ export default function AdminCheckin() {
   const genSchedule = async () => {
     const act = players.filter(p => p.checked_in);
     if (act.length < 2) return alert('Mindestens 2 eingecheckte Spieler!');
-    if (!confirm('Spielplan neu erstellen?')) return;
+    if (!confirm('Spielplan inklusive eventueller K.-o.-Runden neu erstellen?')) return;
 
     await supabase.from('matches').delete().neq('id', '0');
     const cats = {};
@@ -121,21 +119,24 @@ export default function AdminCheckin() {
     }
 
     let matchCnt = 0;
+
     Object.keys(cats).forEach(c => {
       const arr = cats[c];
       if (arr.length < 2) return;
       const d = getDist(arr.length);
       let idx = 0, gLet = 0;
+      let poolCount = 0; // Zählt die generierten Gruppen für diese Altersklasse
 
       const addPool = (sz) => {
         const pPlayers = arr.slice(idx, idx + sz);
         const cCourt = (matchCnt % courts) + 1;
         const sched = courtSchedules[cCourt];
+        const groupName = String.fromCharCode(65 + gLet);
 
         for (let i = 0; i < pPlayers.length; i++) {
           for (let j = i + 1; j < pPlayers.length; j++) {
             sched.matches.push({
-              category: `${c} - Gr. ${String.fromCharCode(65 + gLet)}`,
+              category: `${c} - Gr. ${groupName}`,
               player1_name: pPlayers[i].name,
               player2_name: pPlayers[j].name,
               court: `Platz ${cCourt} (${sched.time} Uhr)`,
@@ -147,19 +148,63 @@ export default function AdminCheckin() {
         idx += sz;
         gLet++;
         matchCnt++;
+        poolCount++;
       };
 
       for (let i = 0; i < d.g5; i++) addPool(5);
       for (let i = 0; i < d.g4; i++) addPool(4);
       for (let i = 0; i < d.g3; i++) addPool(3);
       if (arr.length === 2) addPool(2);
+
+      // LOGIK FÜR HALBFINALE & FINALE: Nur wenn es mindestens 2 Gruppen gibt
+      if (poolCount >= 2) {
+        // Wir nehmen für die gängigen Fälle (2 Gruppen A und B) die Überkreuz-Halbfinals an
+        const cCourtHF1 = (matchCnt % courts) + 1;
+        const schedHF1 = courtSchedules[cCourtHF1];
+        
+        schedHF1.matches.push({
+          category: `${c} - Halbfinale 1`,
+          player1_name: `Sieger Gruppe A`,
+          player2_name: `Zweiter Gruppe B`,
+          court: `Platz ${cCourtHF1} (${schedHF1.time} Uhr)`,
+          status: 'Ausstehend'
+        });
+        schedHF1.time = addMins(schedHF1.time, parseInt(dur));
+        matchCnt++;
+
+        const cCourtHF2 = (matchCnt % courts) + 1;
+        const schedHF2 = courtSchedules[cCourtHF2];
+        
+        schedHF2.matches.push({
+          category: `${c} - Halbfinale 2`,
+          player1_name: `Sieger Gruppe B`,
+          player2_name: poolCount === 2 ? `Zweiter Gruppe A` : `Sieger Gruppe C`,
+          court: `Platz ${cCourtHF2} (${schedHF2.time} Uhr)`,
+          status: 'Ausstehend'
+        });
+        schedHF2.time = addMins(schedHF2.time, parseInt(dur));
+        matchCnt++;
+
+        // Großes Finale hinzufügen
+        const cCourtF = (matchCnt % courts) + 1;
+        const schedF = courtSchedules[cCourtF];
+        
+        schedF.matches.push({
+          category: `${c} - FINALE 🏆`,
+          player1_name: `Sieger Halbfinale 1`,
+          player2_name: `Sieger Halbfinale 2`,
+          court: `Platz ${cCourtF} (${schedF.time} Uhr)`,
+          status: 'Ausstehend'
+        });
+        schedF.time = addMins(schedF.time, parseInt(dur));
+        matchCnt++;
+      }
     });
 
     const finalM = [];
     Object.keys(courtSchedules).forEach(c => finalM.push(...courtSchedules[c].matches));
     if (finalM.length > 0) await supabase.from('matches').insert(finalM);
     
-    // Nach dem Generieren wechseln wir automatisch in den Live-Tab
     setActiveTab('live');
     loadData();
   };
@@ -200,7 +245,6 @@ export default function AdminCheckin() {
       
       <h1 style={{ marginBottom: '24px' }}>Admin Control Panel 🛠️</h1>
       
-      {/* Tab-Navigation */}
       <div style={{ display: 'flex', borderBottom: '2px solid #e4e4e7', marginBottom: '24px', gap: '8px' }}>
         <button 
           onClick={() => setActiveTab('setup')}
@@ -236,35 +280,7 @@ export default function AdminCheckin() {
         </button>
       </div>
 
-      {/* Tab-Inhalte rendern */}
       {activeTab === 'setup' ? (
         <div>
-          <AdminScheduleSettings 
-            courts={courts} setCourts={setCourts}
-            startT={startT} setStartT={setStartT}
-            dur={dur} setDur={setDur}
-            separateGender={separateGender} setSeparateGender={setSeparateGender}
-            onGenerate={genSchedule}
-          />
-
-          <AdminPlayerTable 
-            players={players} 
-            onToggleCheck={toggleCheck} 
-            onDelPlayer={delPlayer} 
-            loadData={loadData}
-          />
-        </div>
-      ) : (
-        <AdminMatchList 
-          matches={matches}
-          editId={editId}
-          resText={resText} setResText={setResText}
-          winName={winName} setWinName={setWinName}
-          onStartEdit={startEdit}
-          onSaveRes={saveRes}
-          setEditId={setEditId}
-        />
-      )}
-    </div>
   );
 }
