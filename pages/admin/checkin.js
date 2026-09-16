@@ -17,6 +17,9 @@ export default function AdminCheckin() {
   const [startT, setStartT] = useState('10:00');
   const [dur, setDur] = useState(20);
   const [separateGender, setSeparateGender] = useState(true);
+  
+  // State für die Tabs: 'setup' oder 'live'
+  const [activeTab, setActiveTab] = useState('setup');
 
   const ADMIN_PASSWORD = "tennis2026";
 
@@ -80,7 +83,6 @@ export default function AdminCheckin() {
     const cats = {};
 
     act.forEach(p => {
-      // 1. Manuelle Admin-Zuweisung prüfen
       if (p.assigned_category) {
         const catKey = p.assigned_category;
         if (!cats[catKey]) cats[catKey] = [];
@@ -88,18 +90,15 @@ export default function AdminCheckin() {
         return;
       }
 
-      // 2. Automatische Berechnung
       const age = 2026 - p.birth_year;
       let ageCat = 'Open';
       if (age <= 12) ageCat = 'U12';
       else if (age <= 15) ageCat = 'U15';
       else if (age <= 18) ageCat = 'U18';
 
-      // Sicheres Auslesen des Geschlechts (erster Buchstabe)
       let gen = (p.gender || 'm').toLowerCase().charAt(0);
-      if (gen === 'd') gen = 'w'; // Divers zu Weiblich
+      if (gen === 'd') gen = 'w';
       
-      // FIX: Wenn die Checkbox aktiv ist ODER wir einen gültigen Geschlechts-String haben, erzwingen wir die Trennung im Matchplan!
       const catKey = separateGender ? `${ageCat} ${gen.toUpperCase()}` : ageCat;
 
       if (!cats[catKey]) cats[catKey] = [];
@@ -159,6 +158,9 @@ export default function AdminCheckin() {
     const finalM = [];
     Object.keys(courtSchedules).forEach(c => finalM.push(...courtSchedules[c].matches));
     if (finalM.length > 0) await supabase.from('matches').insert(finalM);
+    
+    // Nach dem Generieren wechseln wir automatisch in den Live-Tab
+    setActiveTab('live');
     loadData();
   };
 
@@ -193,34 +195,76 @@ export default function AdminCheckin() {
     <div style={{ padding: '24px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
         <Link href="/">← Startseite</Link>
-        <button onClick={handleLogout}>Abmelden 🔓</button>
+        <button onClick={handleLogout} style={{ padding: '6px 12px', cursor: 'pointer' }}>Abmelden 🔓</button>
       </div>
-      <h1>Admin Control Panel 🛠️</h1>
       
-      <AdminScheduleSettings 
-        courts={courts} setCourts={setCourts}
-        startT={startT} setStartT={setStartT}
-        dur={dur} setDur={setDur}
-        separateGender={separateGender} setSeparateGender={setSeparateGender}
-        onGenerate={genSchedule}
-      />
+      <h1 style={{ marginBottom: '24px' }}>Admin Control Panel 🛠️</h1>
+      
+      {/* Tab-Navigation */}
+      <div style={{ display: 'flex', borderBottom: '2px solid #e4e4e7', marginBottom: '24px', gap: '8px' }}>
+        <button 
+          onClick={() => setActiveTab('setup')}
+          style={{
+            padding: '10px 20px',
+            fontSize: '1em',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            border: 'none',
+            background: 'none',
+            borderBottom: activeTab === 'setup' ? '3px solid #0070f3' : '3px solid transparent',
+            color: activeTab === 'setup' ? '#0070f3' : '#71717a',
+            transition: 'all 0.2s'
+          }}
+        >
+          ⚙️ Spieler- & Turnierverwaltung
+        </button>
+        <button 
+          onClick={() => setActiveTab('live')}
+          style={{
+            padding: '10px 20px',
+            fontSize: '1em',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            border: 'none',
+            background: 'none',
+            borderBottom: activeTab === 'live' ? '3px solid #0070f3' : '3px solid transparent',
+            color: activeTab === 'live' ? '#0070f3' : '#71717a',
+            transition: 'all 0.2s'
+          }}
+        >
+          🏆 Live-Spiele & Ergebnisse ({matches.filter(m => m.status !== 'Beendet').length} aktiv)
+        </button>
+      </div>
 
-      <AdminPlayerTable 
-        players={players} 
-        onToggleCheck={toggleCheck} 
-        onDelPlayer={delPlayer} 
-        loadData={loadData}
-      />
+      {/* Tab-Inhalte rendern */}
+      {activeTab === 'setup' ? (
+        <div>
+          <AdminScheduleSettings 
+            courts={courts} setCourts={setCourts}
+            startT={startT} setStartT={setStartT}
+            dur={dur} setDur={setDur}
+            separateGender={separateGender} setSeparateGender={setSeparateGender}
+            onGenerate={genSchedule}
+          />
 
-      <AdminMatchList 
-        matches={matches}
-        editId={editId}
-        resText={resText} setResText={setResText}
-        winName={winName} setWinName={setWinName}
-        onStartEdit={startEdit}
-        onSaveRes={saveRes}
-        setEditId={setEditId}
-      />
+          <AdminPlayerTable 
+            players={players} 
+            onToggleCheck={toggleCheck} 
+            onDelPlayer={delPlayer} 
+            loadData={loadData}
+          />
+        </div>
+      ) : (
+        <AdminMatchList 
+          matches={matches}
+          editId={editId}
+          resText={resText} setResText={setResText}
+          winName={winName} setWinName={setWinName}
+          onStartEdit={startEdit}
+          onSaveRes={saveRes}
+          setEditId={setEditId}
+        />
+      )}
     </div>
   );
 }
