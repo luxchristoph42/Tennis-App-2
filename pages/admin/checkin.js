@@ -250,3 +250,6 @@ export default function AdminCheckin() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
