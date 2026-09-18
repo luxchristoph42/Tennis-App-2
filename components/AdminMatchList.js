@@ -29,73 +29,138 @@ export default function AdminMatchList({
   // Sortierung der Plätze (Platz 1, Platz 2, ...)
   const sortedCourts = Object.keys(groupedMatches).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
+  const componentStyles = (
+    <style dangerouslySetInnerHTML={{__html: `
+      .match-empty-card { padding: 32px 24px; text-align: center; background-color: #fff; border: 1px solid #e5e5ea; border-radius: 14px; color: #8e8e93; font-style: italic; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+      .list-title { font-size: 20px; font-weight: 700; margin: 32px 0 16px 0; color: #1c1c1e; letter-spacing: -0.3px; }
+      .court-group { margin-bottom: 32px; }
+      
+      .court-header { background-color: #000; color: #fff; padding: 12px 16px; border-radius: 10px; font-weight: 600; font-size: 15px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+      .matches-container { display: flex; flex-direction: column; gap: 14px; }
+      
+      .match-card { padding: 16px; border: 1px solid #e5e5ea; border-radius: 12px; background-color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.01); transition: transform 0.2s; position: relative; }
+      .match-status-active { border-left: 5px solid #007af5; }
+      .match-status-ended { border-left: 5px solid #8e8e93; }
+      
+      .match-top-row { display: flex; flex-direction: column; gap: 12px; }
+      .category-badge { font-size: 11px; background-color: #f2f2f7; color: #555; padding: 4px 8px; border-radius: 6px; font-weight: 600; width: fit-content; text-transform: uppercase; letter-spacing: 0.3px; }
+      .time-info { color: #8e8e93; font-size: 13px; font-weight: 500; margin-left: 6px; }
+      
+      .versus-container { font-size: 16px; font-weight: 600; color: #1c1c1e; margin-top: 6px; line-height: 1.4; }
+      .versus-divider { color: #aeaeb2; font-weight: 400; padding: 0 4px; }
+      
+      .status-pill { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; text-align: center; }
+      .pill-active { background-color: #eaf2ff; color: #007af5; }
+      .pill-ended { background-color: #f2f2f7; color: #666; }
+      
+      .result-banner { margin-top: 14px; padding: 12px; background-color: #f6fdf8; border-radius: 8px; border: 1px solid #eaf7ed; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+      .result-text { font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 700; color: #1c1c1e; }
+      .winner-text { color: #1a7f37; font-weight: 700; }
+      
+      .action-footer { margin-top: 14px; text-align: right; border-top: 1px solid #f2f2f7; padding-top: 12px; }
+      
+      .btn-action-trigger { width: 100%; padding: 10px 16px; cursor: pointer; background-color: #fafafa; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 13px; font-weight: 600; color: #1c1c1e; transition: all 0.2s; box-sizing: border-box; }
+      .btn-action-trigger:hover { background-color: #f2f2f7; }
+      
+      .edit-form-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+      .edit-input { padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d1d6; font-size: 14px; width: 100%; box-sizing: border-box; outline: none; }
+      .edit-input:focus { border-color: #000; }
+      
+      .edit-select { padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d1d6; background-color: #fff; font-size: 14px; width: 100%; box-sizing: border-box; outline: none; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; }
+      
+      .btn-group-submit { display: flex; gap: 8px; width: 100%; }
+      .btn-save { flex: 1; background-color: #1a7f37; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+      .btn-save:hover { background-color: #115e29; }
+      .btn-cancel { background: transparent; border: 1px solid #d1d1d6; color: #666; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+      .btn-cancel:hover { background-color: #fafafa; }
+
+      @media (min-width: 640px) {
+        .match-top-row { flex-direction: row; justify-content: space-between; align-items: center; }
+        .result-banner { flex-direction: row; gap: 24px; }
+        .btn-action-trigger { width: auto; display: inline-block; }
+        .edit-form-grid { flex-direction: row; justify-content: flex-end; align-items: center; }
+        .edit-input { width: 140px; }
+        .edit-select { width: 200px; }
+        .btn-group-submit { width: auto; }
+      }
+    `}} />
+  );
+
   if (matches.length === 0) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px', color: '#666', fontStyle: 'italic' }}>
-        Noch keine Spiele generiert. Gehe zum Tab "Spieler- & Turnierverwaltung", um den Spielplan zu erstellen.
+      <div className="match-empty-card">
+        {componentStyles}
+        Noch keine Spiele generiert. Gehe zum Tab "Setup und Spieler", um den Spielplan zu erstellen.
       </div>
     );
   }
 
   return (
     <div>
-      <h2 style={{ marginBottom: '20px' }}>Turnier-Live-Betrieb & Ergebnisse ({matches.length} Spiele)</h2>
+      {componentStyles}
+      <h2 className="list-title">Turnier-Live-Betrieb und Ergebnisse ({matches.length} Spiele)</h2>
       
       {sortedCourts.map(court => (
-        <div key={court} style={{ marginBottom: '32px' }}>
-          {/* Klare Zwischenüberschrift für den Platz */}
-          <div style={{ backgroundColor: '#1e3a8a', color: 'white', padding: '10px 16px', borderRadius: '6px', fontWeight: 'bold', fontSize: '1.2em', marginBottom: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            🏟️ {court}
+        <div key={court} className="court-group">
+          <div className="court-header">
+            {court}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="matches-container">
             {groupedMatches[court].map(m => (
-              <div key={m.id} style={{ padding: '14px', border: '1px solid #e4e4e7', borderRadius: '8px', backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', borderLeft: m.status === 'Beendet' ? '6px solid #a1a1aa' : '6px solid #3b82f6' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div 
+                key={m.id} 
+                className={`match-card ${m.status === 'Beendet' ? 'match-status-ended' : 'match-status-active'}`}
+              >
+                <div className="match-top-row">
                   <div>
-                    <span style={{ fontSize: '0.85em', backgroundColor: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', marginRight: '8px' }}>
+                    <span className="category-badge">
                       {m.category}
                     </span>
-                    <strong style={{ color: '#4b5563' }}>{m.court.includes('(') ? m.court.substring(m.court.indexOf('(')) : ''}</strong>
-                    <div style={{ fontSize: '1.15em', fontWeight: '500', marginTop: '6px' }}>
-                      {m.player1_name} <span style={{ color: '#9ca3af', fontWeight: 'normal' }}>vs.</span> {m.player2_name}
+                    <strong className="time-info">
+                      {m.court.includes('(') ? m.court.substring(m.court.indexOf('(')) : ''}
+                    </strong>
+                    <div className="versus-container">
+                      {m.player1_name} <span className="versus-divider">vs.</span> {m.player2_name}
                     </div>
                   </div>
                   <div>
-                    <span style={{ padding: '6px 10px', borderRadius: '20px', fontSize: '0.85em', backgroundColor: m.status === 'Beendet' ? '#f4f4f5' : '#dbeafe', color: m.status === 'Beendet' ? '#71717a' : '#1e40af', fontWeight: 'bold', border: m.status === 'Beendet' ? '1px solid #e4e4e7' : '1px solid #bfdbfe' }}>
-                      {m.status === 'Beendet' ? '🏁 Beendet' : '🎾 Aktiv'}
+                    <span className={`status-pill ${m.status === 'Beendet' ? 'pill-ended' : 'pill-active'}`}>
+                      {m.status === 'Beendet' ? 'Beendet' : 'Aktiv'}
                     </span>
                   </div>
                 </div>
 
                 {m.status === 'Beendet' && (
-                  <div style={{ marginTop: '10px', padding: '8px 12px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #bbf7d0', display: 'flex', gap: '16px' }}>
-                    <span><strong>Ergebnis:</strong> <span style={{ fontFamily: 'monospace', fontSize: '1.1em' }}>{m.result}</span></span>
-                    <span><strong>Sieger:</strong> <span style={{ color: '#166534', fontWeight: 'bold' }}>🏆 {m.winner}</span></span>
+                  <div className="result-banner">
+                    <span><strong>Ergebnis:</strong> <span className="result-text">{m.result}</span></span>
+                    <span><strong>Sieger:</strong> <span className="winner-text">{m.winner}</span></span>
                   </div>
                 )}
 
-                <div style={{ marginTop: '12px', textAlign: 'right', borderTop: '1px solid #f4f4f5', paddingTop: '8px' }}>
+                <div className="action-footer">
                   {editId === m.id ? (
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                    <div className="edit-form-grid">
                       <input 
                         type="text" 
                         placeholder="z.B. 6:4, 7:5" 
                         value={resText} 
                         onChange={e => setResText(e.target.value)} 
-                        style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #ccc', minWidth: '120px' }} 
+                        className="edit-input" 
                       />
-                      <select value={winName} onChange={e => setWinName(e.target.value)} style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: '#fff' }}>
+                      <select value={winName} onChange={e => setWinName(e.target.value)} className="edit-select">
                         <option value="">-- Sieger wählen --</option>
                         <option value={m.player1_name}>{m.player1_name}</option>
                         <option value={m.player2_name}>{m.player2_name}</option>
                       </select>
-                      <button onClick={() => onSaveRes(m.id)} style={{ backgroundColor: '#22c55e', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Speichern</button>
-                      <button onClick={() => setEditId(null)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: '6px' }}>Abbrechen</button>
+                      <div className="btn-group-submit">
+                        <button onClick={() => onSaveRes(m.id)} className="btn-save">Speichern</button>
+                        <button onClick={() => setEditId(null)} className="btn-cancel">Abbrechen</button>
+                      </div>
                     </div>
                   ) : (
-                    <button onClick={() => onStartEdit(m)} style={{ padding: '6px 12px', cursor: 'pointer', backgroundColor: '#f4f4f5', border: '1px solid #e4e4e7', borderRadius: '4px', fontWeight: '500', color: '#3f3f46' }}>
-                      {m.status === 'Beendet' ? 'Ergebnis bearbeiten 📝' : 'Ergebnis eintragen 🏆'}
+                    <button onClick={() => onStartEdit(m)} className="btn-action-trigger">
+                      {m.status === 'Beendet' ? 'Ergebnis bearbeiten' : 'Ergebnis eintragen'}
                     </button>
                   )}
                 </div>
