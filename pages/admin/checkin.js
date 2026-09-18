@@ -114,40 +114,89 @@ export default function AdminCheckin() {
     setWinName(m.winner || '');
   };
 
+  const responsiveStyles = (
+    <style dangerouslySetInnerHTML={{__html: `
+      .admin-container { padding: 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 900px; margin: 0 auto; color: #1c1c1e; background-color: #fafafa; min-height: 100vh; }
+      .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; font-size: 14px; }
+      .back-link { color: #8e8e93; text-decoration: none; transition: color 0.2s; font-weight: 500; }
+      .back-link:hover { color: #1c1c1e; }
+      .logout-btn { padding: 8px 16px; cursor: pointer; background: #fff; border: 1px solid #e5e5ea; border-radius: 20px; font-size: 13px; font-weight: 500; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+      .logout-btn:hover { background: #f2f2f7; border-color: #d1d1d6; }
+      .main-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 24px; color: #1c1c1e; }
+      .tabs-container { display: flex; background: #eee; padding: 4px; border-radius: 12px; margin-bottom: 28px; gap: 4px; }
+      .tab-trigger { flex: 1; padding: 12px 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: transparent; border-radius: 9px; color: #666; transition: all 0.2s; text-align: center; }
+      .tab-active { background: #fff; color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+      .login-card { padding: 32px 24px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 360px; margin: 120px auto; text-align: center; background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #efeff4; }
+      .login-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; letter-spacing: -0.3px; }
+      .login-input { padding: 14px; width: 100%; box-sizing: border-box; margin-bottom: 14px; border: 1px solid #e5e5ea; border-radius: 10px; font-size: 16px; background: #fafafa; transition: all 0.2s; outline: none; }
+      .login-input:focus { border-color: #000; background: #fff; }
+      .login-submit { width: 100%; padding: 14px; background-color: #000; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+      .login-submit:hover { opacity: 0.85; }
+      @media (min-width: 640px) {
+        .admin-container { padding: 32px; }
+        .main-title { font-size: 34px; }
+        .tab-trigger { font-size: 14px; padding: 12px 20px; }
+        .tabs-container { display: inline-flex; width: auto; min-width: 400px; }
+      }
+    `}} />
+  );
+
   if (!isAuth) {
     return (
-      <div style={{ padding: '40px', fontFamily: 'sans-serif', maxWidth: '300px', margin: '100px auto', textAlign: 'center', border: '1px solid #ccc', borderRadius: '8px' }}>
-        <h2>🔒 Admin Login</h2>
-        <form onSubmit={handleLogin}>
-          <input type="password" placeholder="Passwort" value={password} onChange={e => setPassword(e.target.value)} style={{ padding: '8px', width: '100%', marginBottom: '10px' }} />
-          <button type="submit" style={{ width: '100%', padding: '8px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '4px' }}>Login</button>
-        </form>
-      </div>
+      <>
+        {responsiveStyles}
+        <div className="login-card">
+          <h2 className="login-title">Admin Login</h2>
+          <form onSubmit={handleLogin}>
+            <input 
+              type="password" 
+              placeholder="Passwort" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              className="login-input"
+            />
+            <button type="submit" className="login-submit">Einloggen</button>
+          </form>
+        </div>
+      </>
     );
   }
 
   return (
-    <div style={{ padding: '24px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <Link href="/">← Startseite</Link>
-        <button onClick={handleLogout} style={{ padding: '6px 12px', cursor: 'pointer' }}>Abmelden 🔓</button>
-      </div>
-      
-      <h1>Admin Control Panel 🛠️</h1>
-      
-      <div style={{ display: 'flex', borderBottom: '2px solid #e4e4e7', marginBottom: '24px', gap: '8px' }}>
-        <button onClick={() => setActiveTab('setup')} style={{ padding: '10px 20px', fontSize: '1em', fontWeight: 'bold', cursor: 'pointer', border: 'none', background: 'none', borderBottom: activeTab === 'setup' ? '3px solid #0070f3' : '3px solid transparent', color: activeTab === 'setup' ? '#0070f3' : '#71717a' }}>⚙️ Spieler- & Turnierverwaltung</button>
-        <button onClick={() => setActiveTab('live')} style={{ padding: '10px 20px', fontSize: '1em', fontWeight: 'bold', cursor: 'pointer', border: 'none', background: 'none', borderBottom: activeTab === 'live' ? '3px solid #0070f3' : '3px solid transparent', color: activeTab === 'live' ? '#0070f3' : '#71717a' }}>🏆 Live-Spiele & Ergebnisse</button>
-      </div>
-
-      {activeTab === 'setup' ? (
-        <div>
-          <AdminScheduleSettings courts={courts} setCourts={setCourts} startT={startT} setStartT={startT} endT={endT} setEndT={setEndT} dur={dur} setDur={setDur} separateGender={separateGender} setSeparateGender={setSeparateGender} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} onGenerate={genSchedule} />
-          <AdminPlayerTable players={players} onToggleCheck={toggleCheck} onDelPlayer={delPlayer} loadData={loadData} />
+    <>
+      {responsiveStyles}
+      <div className="admin-container">
+        <div className="nav-header">
+          <Link href="/" className="back-link">← Zurück zur Startseite</Link>
+          <button onClick={handleLogout} className="logout-btn">Abmelden</button>
         </div>
-      ) : (
-        <AdminMatchList matches={matches} editId={editId} resText={resText} setResText={setResText} winName={winName} setWinName={setWinName} onStartEdit={startEdit} onSaveRes={saveRes} setEditId={setEditId} />
-      )}
-    </div>
+        
+        <h1 className="main-title">Admin Control Panel</h1>
+        
+        <div className="tabs-container">
+          <button 
+            onClick={() => setActiveTab('setup')} 
+            className={`tab-trigger ${activeTab === 'setup' ? 'tab-active' : ''}`}
+          >
+            Setup und Spieler
+          </button>
+          <button 
+            onClick={() => setActiveTab('live')} 
+            className={`tab-trigger ${activeTab === 'live' ? 'tab-active' : ''}`}
+          >
+            Live-Matches
+          </button>
+        </div>
+
+        {activeTab === 'setup' ? (
+          <div>
+            <AdminScheduleSettings courts={courts} setCourts={setCourts} startT={startT} setStartT={startT} endT={endT} setEndT={setEndT} dur={dur} setDur={setDur} separateGender={separateGender} setSeparateGender={setSeparateGender} tournamentMode={tournamentMode} setTournamentMode={setTournamentMode} onGenerate={genSchedule} />
+            <AdminPlayerTable players={players} onToggleCheck={toggleCheck} onDelPlayer={delPlayer} loadData={loadData} />
+          </div>
+        ) : (
+          <AdminMatchList matches={matches} editId={editId} resText={resText} setResText={setResText} winName={winName} setWinName={setWinName} onStartEdit={startEdit} onSaveRes={saveRes} setEditId={setEditId} />
+        )}
+      </div>
+    </>
   );
 }
