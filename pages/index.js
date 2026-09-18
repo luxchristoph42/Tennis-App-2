@@ -28,7 +28,7 @@ export default function Home() {
   const getCourtName = (courtString) => {
     if (!courtString) return 'Unbekannter Platz';
     const match = courtString.match(/Platz\s+\d+/i);
-    return match ? match : courtString;
+    return match ? match[0] : courtString;
   };
 
   const groupedMatches = {};
@@ -47,104 +47,183 @@ export default function Home() {
   });
   const sortedCategories = Object.keys(categoriesMap).sort();
 
-  return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#fafafa', fontFamily: 'sans-serif', color: '#1c1917', margin: 0, padding: 0 }}>
+  const componentStyles = (
+    <style dangerouslySetInnerHTML={{__html: `
+      .app-wrapper { min-height: 100vh; backgroundColor: #fafafa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1c1c1e; }
+      .site-header { background-color: #ffffff; border-bottom: 1px solid #e5e5ea; padding: 16px; }
+      .header-container { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+      .brand-title { font-size: 18px; font-weight: 700; letter-spacing: -0.4px; color: #1c1c1e; }
       
-      <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e7e5e4', padding: '16px 24px' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.025em' }}>
-            Turnier-Dashboard
-          </div>
-          <nav style={{ display: 'flex', gap: '20px' }}>
-            <Link href="/register" style={{ textDecoration: 'none', color: '#2563eb', fontSize: '14px', fontWeight: '600' }}>
-              Spieler-Anmeldung
-            </Link>
-            <Link href="/admin/checkin" style={{ textDecoration: 'none', color: '#78716c', fontSize: '14px', fontWeight: '500' }}>
-              Turnierleitung
-            </Link>
+      .top-nav { display: flex; gap: 16px; align-items: center; }
+      .nav-link-primary { text-decoration: none; color: #007af5; font-size: 14px; font-weight: 600; transition: opacity 0.2s; }
+      .nav-link-secondary { text-decoration: none; color: #8e8e93; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+      .nav-link-primary:hover, .nav-link-secondary:hover { opacity: 0.8; color: #1c1c1e; }
+      
+      .main-content { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+      
+      .tabs-bar { display: flex; background: #eee; padding: 4px; border-radius: 12px; margin-bottom: 28px; gap: 4px; }
+      .tab-btn { flex: 1; padding: 12px 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: transparent; border-radius: 9px; color: #666; transition: all 0.2s; text-align: center; }
+      .tab-btn-active { background: #fff; color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+      
+      .msg-empty { background-color: #ffffff; border: 1px solid #e5e5ea; border-radius: 14px; padding: 48px 24px; text-align: center; color: #8e8e93; font-style: italic; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+      .standings-stack { display: flex; flex-direction: column; gap: 28px; }
+      
+      .category-card { background-color: #ffffff; border: 1px solid #e5e5ea; border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); overflow: hidden; }
+      .category-card-title { margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #1c1c1e; border-bottom: 1px solid #f2f2f7; padding-bottom: 12px; letter-spacing: -0.2px; }
+      
+      /* Responsive Table Style */
+      .desktop-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; display: none; }
+      .th-label { padding: 10px 12px; font-size: 13px; font-weight: 600; color: #8e8e93; border-bottom: 1px solid #e5e5ea; }
+      .td-value { padding: 12px; border-bottom: 1px solid #f2f2f7; vertical-align: middle; }
+      
+      .mobile-rows-list { display: flex; flex-direction: column; gap: 10px; }
+      .mobile-row-item { padding: 12px; border: 1px solid #e5e5ea; border-radius: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+      .mobile-item-top { display: flex; justify-content: space-between; align-items: center; }
+      .player-rank-name { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+      .rank-num { font-size: 13px; color: #8e8e93; min-width: 20px; }
+      .mobile-metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #fafafa; padding: 8px; border-radius: 6px; font-size: 12px; text-align: center; color: #555; }
+      .metric-label { font-size: 10px; color: #8e8e93; text-transform: uppercase; margin-bottom: 2px; font-weight: 600; }
+      .metric-val { font-weight: 600; }
+      
+      .color-top-two { background-color: #f6fdf8 !important; }
+      .rank-top-two { color: #1a7f37 !important; font-weight: 700; }
+      .diff-positive { color: #1a7f37; font-weight: 600; font-family: monospace; }
+      .diff-negative { color: #ff3b30; font-weight: 600; font-family: monospace; }
+
+      @media (min-width: 600px) {
+        .tabs-bar { display: inline-flex; width: auto; min-width: 360px; }
+        .main-content { margin: 40px auto; }
+        .site-header { padding: 16px 24px; }
+      }
+      @media (min-width: 768px) {
+        .desktop-table { display: table; }
+        .mobile-rows-list { display: none; }
+      }
+    `}} />
+  );
+
+  return (
+    <div className="app-wrapper">
+      {componentStyles}
+      
+      <header className="site-header">
+        <div className="header-container">
+          <div className="brand-title">Turnier-Dashboard</div>
+          <nav className="top-nav">
+            <Link href="/register" className="nav-link-primary">Spieler-Anmeldung</Link>
+            <Link href="/admin/checkin" className="nav-link-secondary">Turnierleitung</Link>
           </nav>
         </div>
       </header>
 
-      <main style={{ maxWidth: '1000px', margin: '40px auto', padding: '0 24px' }}>
-        
-        <div style={{ display: 'flex', borderBottom: '1px solid #e7e5e4', marginBottom: '32px', justifyContent: 'flex-start', gap: '24px' }}>
+      <main className="main-content">
+        <div className="tabs-bar">
           <button 
             onClick={() => setActiveTab('schedule')} 
-            style={{ padding: '12px 4px', fontSize: '15px', fontWeight: activeTab === 'schedule' ? '700' : '500', cursor: 'pointer', border: 'none', background: 'none', borderBottom: activeTab === 'schedule' ? '2px solid #1c1917' : '2px solid transparent', color: activeTab === 'schedule' ? '#1c1917' : '#78716c', transition: 'all 0.15s ease' }}
+            className={`tab-btn ${activeTab === 'schedule' ? 'tab-btn-active' : ''}`}
           >
             Live-Spielplan
           </button>
           <button 
             onClick={() => setActiveTab('standings')} 
-            style={{ padding: '12px 4px', fontSize: '15px', fontWeight: activeTab === 'standings' ? '700' : '500', cursor: 'pointer', border: 'none', background: 'none', borderBottom: activeTab === 'standings' ? '2px solid #1c1917' : '2px solid transparent', color: activeTab === 'standings' ? '#1c1917' : '#78716c', transition: 'all 0.15s ease' }}
+            className={`tab-btn ${activeTab === 'standings' ? 'tab-btn-active' : ''}`}
           >
             Ranglisten & Tabellen
           </button>
         </div>
 
         {loading ? (
-          <p style={{ textAlign: 'center', color: '#78716c', fontSize: '14px' }}>Daten werden geladen...</p>
+          <p style={{ textAlign: 'center', color: '#8e8e93', fontSize: '14px', fontStyle: 'italic' }}>Daten werden geladen...</p>
         ) : matches.length === 0 ? (
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e7e5e4', borderRadius: '8px', padding: '48px', textAlign: 'center', color: '#78716c', fontSize: '15px' }}>
+          <div className="msg-empty">
             Der Spielplan wurde noch nicht generiert.
           </div>
         ) : activeTab === 'schedule' ? (
-          
           <LiveScheduleView sortedCourts={sortedCourts} groupedMatches={groupedMatches} />
-          
         ) : (
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          <div className="standings-stack">
             {sortedCategories.map(catKey => {
               const groupRankings = calculateStandings(categoriesMap[catKey], tournamentMode);
 
               return (
-                <div key={catKey} style={{ backgroundColor: '#ffffff', border: '1px solid #e7e5e4', borderRadius: '8px', padding: '24px', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                  <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', fontWeight: '700', color: '#1c1917', borderBottom: '1px solid #f5f5f4', paddingBottom: '12px' }}>
-                    {catKey}
-                  </h3>
+                <div key={catKey} className="category-card">
+                  <h3 className="category-card-title">{catKey}</h3>
                   
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                  {/* MOBILE ANSICHT: Kartensystem für kleine Bildschirme */}
+                  <div className="mobile-rows-list">
+                    {groupRankings.map((player, index) => {
+                      const diffSign = player.diff > 0 ? '+' : '';
+                      const isTopTwo = index < 2;
+                      return (
+                        <div 
+                          key={player.name} 
+                          className={`mobile-row-item ${isTopTwo ? 'color-top-two' : ''}`}
+                        >
+                          <div className="mobile-item-top">
+                            <div className="player-rank-name">
+                              <span className={`rank-num ${isTopTwo ? 'rank-top-two' : ''}`}>{index + 1}.</span>
+                              <span style={{ fontWeight: isTopTwo ? '600' : '500' }}>{player.name}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="mobile-metrics-grid">
+                            <div>
+                              <div className="metric-label">Spiele</div>
+                              <div className="metric-val">{player.matchesPlayed}</div>
+                            </div>
+                            <div>
+                              <div className="metric-label">{tournamentMode === 'time' ? 'Games' : 'Matches'}</div>
+                              <div className="metric-val">{tournamentMode === 'time' ? player.gamesWon : `${player.wins}:${player.losses}`}</div>
+                            </div>
+                            <div>
+                              <div className="metric-label">Diff</div>
+                              <div className={`metric-val ${player.diff >= 0 ? 'diff-positive' : 'diff-negative'}`}>
+                                {diffSign}{player.gamesWon - player.gamesLost}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* DESKTOP ANSICHT: Tabellenstruktur ab Tablet/PC */}
+                  <table className="desktop-table">
                     <thead>
-                      <tr style={{ color: '#78716c', borderBottom: '1px solid #e7e5e4' }}>
-                        <th style={{ padding: '8px 12px', width: '60px' }}>Rang</th>
-                        <th style={{ padding: '8px 12px' }}>Spieler</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'center', width: '60px' }}>Spiele</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'center', width: '80px' }}>
+                      <tr style={{ color: '#8e8e93', borderBottom: '1px solid #e5e5ea' }}>
+                        <th className="th-label" style={{ width: '60px' }}>Rang</th>
+                        <th className="th-label">Spieler</th>
+                        <th className="th-label" style={{ textAlign: 'center', width: '60px' }}>Spiele</th>
+                        <th className="th-label" style={{ textAlign: 'center', width: '100px' }}>
                           {tournamentMode === 'time' ? 'Gew. Games' : 'Matches'}
                         </th>
-                        <th style={{ padding: '8px 12px', textAlign: 'center', width: '80px' }}>Verhältnis</th>
+                        <th className="th-label" style={{ textAlign: 'center', width: '100px' }}>Verhältnis</th>
                       </tr>
                     </thead>
                     <tbody>
                       {groupRankings.map((player, index) => {
                         const diffSign = player.diff > 0 ? '+' : '';
-                        const isTopTwo = index < 2; // Die ersten beiden Plätze ermitteln
+                        const isTopTwo = index < 2;
                         
                         return (
                           <tr 
                             key={player.name} 
-                            style={{ 
-                              borderBottom: '1px solid #f5f5f4', 
-                              // Grünliche Hintergrundfarbe für Platz 1 und Platz 2
-                              backgroundColor: isTopTwo ? '#f0fdf4' : 'transparent',
-                              transition: 'background-color 0.2s'
-                            }}
+                            className={isTopTwo ? 'color-top-two' : ''}
+                            style={{ borderBottom: '1px solid #f2f2f7', transition: 'background-color 0.2s' }}
                           >
-                            <td style={{ padding: '12px 12px', fontWeight: isTopTwo ? '600' : '400', color: isTopTwo ? '#16a34a' : '#78716c' }}>
+                            <td className="td-value" style={{ fontWeight: isTopTwo ? '600' : '400', color: isTopTwo ? '#1a7f37' : '#8e8e93' }}>
                               {index + 1}.
                             </td>
-                            <td style={{ padding: '12px 12px', fontWeight: isTopTwo ? '600' : '400', color: '#1c1917' }}>
+                            <td className="td-value" style={{ fontWeight: isTopTwo ? '600' : '400' }}>
                               {player.name}
                             </td>
-                            <td style={{ padding: '12px 12px', textAlign: 'center', color: '#78716c' }}>
+                            <td className="td-value" style={{ textAlign: 'center', color: '#8e8e93' }}>
                               {player.matchesPlayed}
                             </td>
-                            <td style={{ padding: '12px 12px', textAlign: 'center', fontWeight: '600' }}>
+                            <td className="td-value" style={{ textAlign: 'center', fontWeight: '600' }}>
                               {tournamentMode === 'time' ? player.gamesWon : `${player.wins}:${player.losses}`}
                             </td>
-                            <td style={{ padding: '12px 12px', textAlign: 'center', color: player.diff >= 0 ? '#16a34a' : '#dc2626', fontFamily: 'monospace' }}>
+                            <td className={`td-value ${player.diff >= 0 ? 'diff-positive' : 'diff-negative'}`} style={{ textAlign: 'center' }}>
                               {diffSign}{player.gamesWon - player.gamesLost}
                             </td>
                           </tr>
@@ -152,19 +231,13 @@ export default function Home() {
                       })}
                     </tbody>
                   </table>
-                  <div style={{ marginTop: '14px', fontSize: '12px', color: '#78716c' }}>
-                    Die grün markierten Plätze 1 & 2 qualifizieren sich für die K.-o.-Endrunde.
-                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </main>
-
-      <footer style={{ borderTop: '1px solid #e7e5e4', padding: '24px', textAlign: 'center', fontSize: '13px', color: '#a8a29e', marginTop: '60px' }}>
-        Vereinsverwaltung Live-Modul
-      </footer>
     </div>
   );
 }
+
